@@ -1,5 +1,57 @@
 import numpy as np
 # import cupy as np
+
+## Data generation and curation
+def generate_ground_truth(R_true, X_true_0, N):
+    X_true = [X_true_0] + [X_init for _ in range(N)]
+    A_hat_r = convert_vect_to_rotation_matrix(R_true)
+    for k in range(1, N + 1):
+        X_true[k] = A_hat_r @ X_true[k-1]
+    return X_true
+def generate_noisy_obs(X_true, C, sigma2_Z, N):
+    # y = [0]
+    y = []
+    for k in range (0, N+1):
+        true_projection = C @ X_true[k]  # Project X_k onto [1, 0]
+        noise = np.random.normal(0, np.sqrt(sigma2_Z))  # Add Gaussian noise
+        y.append(true_projection + noise)
+    return y
+
+## Visualization
+def plot_x_and_r_true(X_true, R_true, save_path=None):
+    plt.figure(figsize=(8, 8))
+
+    # Plot the unit circle
+    circle = plt.Circle((0, 0), 1, color='grey', fill=False, linestyle='dotted', linewidth=1.5)
+    plt.gca().add_artist(circle)
+
+    # Plot the true rotation vector
+    plt.quiver(0, 0, R_true[0, 0], R_true[1, 0], angles='xy', scale_units='xy', scale=1, color='purple', label="Rotator Vector R")
+
+    X_true_np = np.array(X_true)  # Assuming X_true is a list of dictionaries with 'm'
+    plt.scatter(X_true_np[:, 0], X_true_np[:, 1], color='black', alpha=0.7, label="Position $X_k$")
+
+    # Configure the plot
+    plt.axhline(0, color='k', linestyle='--', linewidth=0.5)
+    plt.axvline(0, color='k', linestyle='--', linewidth=0.5)
+    plt.xlabel("X-axis")
+    plt.ylabel("Y-axis")
+    plt.legend(loc='upper left')
+    plt.axis('equal')
+    plt.grid()
+    plt.xlim(-1.5, 1.5)
+    plt.ylim(-1.5, 1.5)
+
+    # Save or display the plot
+    if save_path:
+        plt.savefig(save_path)
+        plt.close()
+    else:
+        plt.show()
+
+    return
+
+## Miscellany
 def convert_vect_to_rotation_matrix(vect):
     r1, r2 = vect[0, 0], vect[1, 0]
     A_hat_r = np.array([[r1, -r2], [r2, r1]])

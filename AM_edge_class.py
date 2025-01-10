@@ -229,22 +229,6 @@ class R_k_edge:
         self.m = est
         return
 
-def generate_ground_truth(R_true, X_true_0, N):
-    X_true = [X_true_0] + [X_init for _ in range(N)]
-    A_hat_r = convert_vect_to_rotation_matrix(R_true)
-    for k in range(1, N + 1):
-        X_true[k] = A_hat_r @ X_true[k-1]
-    return X_true
-
-def generate_noisy_obs(X_true, C, sigma2_Z, N):
-    # y = [0]
-    y = []
-    for k in range (0, N+1):
-        true_projection = C @ X_true[k]  # Project X_k onto [1, 0]
-        noise = np.random.normal(0, np.sqrt(sigma2_Z))  # Add Gaussian noise
-        y.append(true_projection + noise)
-    return y
-
 def collect_R_est (R_edges, N):
     msgb_R_xi_norm = np.array([[0], [0]])
     msgb_R_W_norm_coeff = 0
@@ -361,7 +345,7 @@ def alternate_maximization(sigma2_Z, N, y_obs, tol, max_pass, R_true, X_true):
 
     return R_est, X_est, theta_series, r_norm_series
 
-
+## Visualization
 def plot_x_and_r_am(X_vis_entry, X_true, R_est, R_true, step, save_path=None):
     """
     Plot the mean and variance of X along with the estimated and true rotation vectors.
