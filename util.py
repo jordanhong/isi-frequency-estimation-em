@@ -5,12 +5,23 @@ import matplotlib.pyplot as plt
 
 ## Parameter setup
 def setup_params(sigma2_Z):
-    infty = sigma2_Z*1e8 # when sigma2_Z = 5e-12, eps = 5e-6
-    # eps   = min(sigma2_Z*1e6, 1e-6)
-    eps   = sigma2_Z*1e-6
+    ### Config 1 (passes test_alternate_max)
+    # infty = sigma2_Z*1e8
+    # eps   = sigma2_Z*1e3
+    # V_U_coeff = sigma2_Z*1e3
+
+    ### Config 2 (doesn't pass, but EM code works without failing assertion)
+    # infty = sigma2_Z*1e6
+    # eps   = sigma2_Z*1e-2
+    # V_U_coeff = sigma2_Z*1e2
+
+    ### Config 3 (passes)
+    infty = sigma2_Z*1e7
+    eps   = sigma2_Z*1e1
+    V_U_coeff = sigma2_Z*1e2
+
     msg_V_init = infty*np.eye(2)
     msg_W_init = eps*np.eye(2)
-    V_U_coeff = sigma2_Z*1e3
 
     return msg_V_init,msg_W_init,V_U_coeff
 ## Data generation and curation
@@ -190,6 +201,6 @@ def vector_angle(vector):
     """
     if vector.shape != (2, 1):
         raise ValueError("Input must be a 2x1 NumPy matrix.")
-    
+
     x, y = vector[0, 0], vector[1, 0]  # Extract x and y components
     return np.arctan2(y, x)

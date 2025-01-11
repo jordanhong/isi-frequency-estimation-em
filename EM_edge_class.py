@@ -98,14 +98,14 @@ class R_k_edge_EM:
         return self
 
 def expectation_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_true, X_true):
-    # msg_V_init,msg_W_init,V_U_coeff = setup_params(sigma2_Z)
+    msg_V_init,msg_W_init,V_U_coeff = setup_params(sigma2_Z)
     ## Params
     ############
-    infty = sigma2_Z*1e6
-    eps   = sigma2_Z*1e-3
-    V_U_coeff = sigma2_Z*1e2
-    msg_V_init = infty*np.eye(2)
-    msg_W_init = eps*np.eye(2)
+    # infty = sigma2_Z*1e6
+    # eps   = sigma2_Z*1e-3
+    # V_U_coeff = sigma2_Z*1e2
+    # msg_V_init = infty*np.eye(2)
+    # msg_W_init = eps*np.eye(2)
     ############
     # infty = sigma2_Z*1e9 # when sigma2_Z = 5e-12, eps = 5e-6
     # eps   = sigma2_Z*1e-2
