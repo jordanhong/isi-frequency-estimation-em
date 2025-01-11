@@ -269,7 +269,10 @@ def estimate_X(R_est, X_edges, y, V_U, N, sigma2_Z, msg_V_init, msg_W_init, DEBU
 
     return X_est
 
-def estimate_R(X_est, R_edges, V_U, N):
+def estimate_R(X_est, R_edges, V_U, N, msg_V_init, msg_W_init):
+    for k in range(0, N+1):
+        R_edges[k].__init__(msg_V_init, msg_W_init)
+
     for k in range(1, N+1):
         R_edges[k].update_x_hat_and_A(X_est[k], X_est[k-1])
 
@@ -289,61 +292,64 @@ def estimate_R(X_est, R_edges, V_U, N):
     ##################
     return R_est_new
 
-def setup_params(sigma2_Z):
-    infty = sigma2_Z*1e8 # when sigma2_Z = 5e-12, eps = 5e-6
-    eps   = min(sigma2_Z*1e6, 1e-6)
-    msg_V_init = infty*np.eye(2)
-    msg_W_init = eps*np.eye(2)
-    V_U_coeff = sigma2_Z*1e2
-
-    return msg_V_init,msg_W_init,V_U_coeff
-
-def alternate_maximization(sigma2_Z, N, y_obs, tol, max_pass, R_true, X_true):
-    # prev_R_est = None  # To store the previous estimate of R
+def alternate_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_true, X_true):
     ## Params
     msg_V_init,msg_W_init,V_U_coeff = setup_params(sigma2_Z)
     ####
 
-    X_edges = [X_k_edge_MBF(sigma2_Z, msg_V_init, msg_W_init) for k in range(N+1)]
-    R_edges = [R_k_edge(msg_V_init, msg_W_init) for k in range(N+1)]
+    X_edges = [X_k_edge_MBF(sigma2_Z, msg_V_init, msg_W_init) for _ in range(N+1)]
+    R_edges = [R_k_edge(msg_V_init, msg_W_init) for _ in range(N+1)]
 
     DEBUG = True
     R_est = R_init
-    max_iter = 3
     theta_series = []
     r_norm_series = []
-    for iter_idx in range (max_iter):
-        print(f"START OF V_U iteration {iter_idx}, max_iter={max_iter}")
-        for p in range (max_pass):
-            print(f"=============START OF PASS {p} sigma2_Z={sigma2_Z:.2e}, N={N}, max_pass={max_pass}  ==============")
+    X_est_vis = []
+
+    for out_iter in range (max_out_iter):
+        print(f"Outer iteration {out_iter + 1}/{max_out_iter}")
+        for in_iter in range (max_in_iter):
+            print(f"Iteration {in_iter + 1}/{max_in_iter}")
             print_vector(R_est, "Current R_est")
             V_U = V_U_coeff * np.eye(2)
 
+            ## Step 1: Estimate X while keeping R fixed
             X_est = estimate_X(R_est, X_edges, y_obs, V_U, N, sigma2_Z, msg_V_init, msg_W_init, DEBUG)
-            ## print out states
+
+            # Print out X states
             for k in range(0, N+1):
                 m_est = X_est[k]
                 print_vectors_side_by_side_float(m_est, X_true[k], f"X_{k}.m", f"True X_{k}")
 
-            for k in range(0, N+1):
-                R_edges[k].__init__(msg_V_init, msg_W_init)
+            # Visualize X estimation
+            X_vis = [{"m": x.marginal(), "V": x.V} for x in X_edges[1:]]
+            X_est_vis.append({"step": "1_X_estimation", "out_iter": out_iter, "in_iter": in_iter, "X_vis": X_vis, "R_est": R_est.copy()})
 
-            R_est_new = estimate_R(X_est, R_edges, V_U, N)
-            theta_hat = vector_angle(R_est_new)
+            ## Step 2: Estimate R while keeping X fixed
+            R_est = estimate_R(X_est, R_edges, V_U, N, msg_V_init, msg_W_init)
+
+            # Print out R estimate
+            print_vectors_side_by_side(R_est, R_true, ">R_est", "R_true")
+
+            # Additional logs
+            theta_hat = vector_angle(R_est)
             theta_series = theta_series + [theta_hat]
-            r_norm_series = r_norm_series + [np.linalg.norm(R_est_new)]
-            print_vectors_side_by_side(R_est_new, R_true, ">R_est", "R_true")
-            sqe = squared_error(R_est_new, R_true)
+            r_norm_series = r_norm_series + [np.linalg.norm(R_est)]
+
+            # Visualize R estimation
+            X_est_vis.append({"step": "2_R_estimation", "out_iter": out_iter, "in_iter": in_iter, "X_vis": X_vis, "R_est": R_est.copy()})
+
+            ## Calculate Squared Error
+            sqe = squared_error(R_est, R_true)
             print(f"sqe: {sqe:.2e}")
 
-            prev_R_est = R_est_new
-            R_est = R_est_new
+            R_est = R_est
+
 
 
         V_U_coeff = (V_U_coeff * 0.5)
-        # print()
 
-    return R_est, X_est, theta_series, r_norm_series
+    return R_est, X_est, X_est_vis, theta_series, r_norm_series
 
 ## Visualization
 def plot_x_and_r_am(X_vis_entry, X_true, R_est, R_true, step, save_path=None):
@@ -375,10 +381,10 @@ def plot_x_and_r_am(X_vis_entry, X_true, R_est, R_true, step, save_path=None):
     label_for_x_mean = "Estimated X"
     for x in X_vis_entry:
         mean = x['m'].flatten()
-        var = 0.2* np.sqrt(np.linalg.det(x['V']))  # control: 0.2
-        # var = np.sqrt(np.linalg.det(x['V']))  # working: 1
-        print(mean)
-        print(f"{var:.2e}")
+        # var = 0.2* np.sqrt(np.linalg.det(x['V']))  # control: 0.2
+        var = np.sqrt(np.linalg.det(x['V']))  # working: 1
+        # print(mean)
+        # print(f"{var:.2e}")
         # plt.scatter(mean[0], mean[1], color='red', label="Estimated X")
         handles, labels = plt.gca().get_legend_handles_labels()
         if label_for_x_mean not in labels:
@@ -415,66 +421,64 @@ def plot_x_and_r_am(X_vis_entry, X_true, R_est, R_true, step, save_path=None):
 
     return
 
-def alternate_maximization_log(sigma2_Z, N, y_obs, tol, max_pass, R_true, X_true):
-    """
-    Perform alternate maximization and return intermediate estimations, emphasizing each half algorithm.
+# def alternate_maximization_log(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_true, X_true):
+#     """
+#     Perform alternate maximization and return intermediate estimations, emphasizing each half algorithm.
 
-    Parameters:
-        sigma2_Z (float): Noise variance.
-        N (int): Number of iterations.
-        y_obs (list): Observed data.
-        tol (float): Tolerance for convergence.
-        max_pass (int): Maximum number of passes per iteration.
-        R_true (np.ndarray): Ground truth rotation vector.
-        X_true (list): Ground truth X values.
+#     Parameters:
+#         sigma2_Z (float): Noise variance.
+#         N (int): Number of iterations.
+#         y_obs (list): Observed data.
+#         max_in_iter (int): Maximum number of passes per iteration.
+#         R_true (np.ndarray): Ground truth rotation vector.
+#         X_true (list): Ground truth X values.
 
-    Returns:
-        R_est (np.ndarray): Final estimated rotation vector.
-        X_est (list): Final estimates for X.
-        X_est_vis (list): List of intermediate visualization data for X and R at each iteration.
-    """
-    infty = sigma2_Z * 1e9
-    eps = sigma2_Z * 1e-3
-    msg_V_init = infty * np.eye(2)
-    msg_W_init = eps * np.eye(2)
-    V_U_coeff = sigma2_Z * 1e3
+#     Returns:
+#         R_est (np.ndarray): Final estimated rotation vector.
+#         X_est (list): Final estimates for X.
+#         X_est_vis (list): List of intermediate visualization data for X and R at each iteration.
+#     """
+#     infty = sigma2_Z * 1e9
+#     eps = sigma2_Z * 1e-3
+#     msg_V_init = infty * np.eye(2)
+#     msg_W_init = eps * np.eye(2)
+#     V_U_coeff = sigma2_Z * 1e3
 
-    R_est = R_init
-    X_edges = [X_k_edge_MBF(sigma2_Z, msg_V_init, msg_W_init) for _ in range(N + 1)]
-    R_edges = [R_k_edge(msg_V_init, msg_W_init) for _ in range(N + 1)]
+#     R_est = R_init
+#     X_edges = [X_k_edge_MBF(sigma2_Z, msg_V_init, msg_W_init) for _ in range(N + 1)]
+#     R_edges = [R_k_edge(msg_V_init, msg_W_init) for _ in range(N + 1)]
 
-    X_est_vis = []
+#     X_est_vis = []
 
-    # Add initial state before the loop
-    # X_vis = [{"m": X_init , "V": msg_V_init} for x in X_edges[1:]]
-    # X_est_vis.append({"step": "initial", "v_u_iter": 0, "iteration": 0, "X_vis": X_vis, "R_est": R_est.copy()})
+#     # Add initial state before the loop
+#     # X_vis = [{"m": X_init , "V": msg_V_init} for x in X_edges[1:]]
+#     # X_est_vis.append({"step": "initial", "out_iter": 0, "iteration": 0, "X_vis": X_vis, "R_est": R_est.copy()})
     
 
-    DEBUG = True 
-    max_iter = 2
-    for iter_idx in range(max_iter):
-        print(f"V_U Iteration {iter_idx+ 1}/{max_iter}")
-        # print("Hello world")
-        for iteration in range(max_pass):
-            print(f"Iteration {iteration + 1}/{max_pass}")
+#     DEBUG = True 
+#     for iter_idx in range(max_out_iter):
+#         print(f"V_U Iteration {iter_idx+ 1}/{max_out_iter}")
+#         # print("Hello world")
+#         for iteration in range(max_in_iter):
+#             print(f"Iteration {iteration + 1}/{max_in_iter}")
 
-            # Update V_U dynamically
-            V_U = V_U_coeff * np.eye(2)
+#             # Update V_U dynamically
+#             V_U = V_U_coeff * np.eye(2)
 
-            # Step 1: Estimate X while keeping R fixed
-            X_est = estimate_X(R_est, X_edges, y_obs, V_U, N, sigma2_Z, msg_V_init, msg_W_init, DEBUG)
+#             # Step 1: Estimate X while keeping R fixed
+#             X_est = estimate_X(R_est, X_edges, y_obs, V_U, N, sigma2_Z, msg_V_init, msg_W_init, DEBUG)
 
-            # Visualize X estimation
-            X_vis = [{"m": x.marginal(), "V": x.V} for x in X_edges[1:]]
-            X_est_vis.append({"step": "1_X_estimation", "v_u_iter": iter_idx, "iteration": iteration, "X_vis": X_vis, "R_est": R_est.copy()})
+#             # Visualize X estimation
+#             X_vis = [{"m": x.marginal(), "V": x.V} for x in X_edges[1:]]
+#             X_est_vis.append({"step": "1_X_estimation", "out_iter": iter_idx, "iteration": iteration, "X_vis": X_vis, "R_est": R_est.copy()})
 
-            # Step 2: Estimate R while keeping X fixed
-            R_est = estimate_R(X_est, R_edges, V_U, N)
-            print_vector(R_est, f"R_est at iteration: {iteration + 1}/{max_pass}")
+#             # Step 2: Estimate R while keeping X fixed
+#             R_est = estimate_R(X_est, R_edges, V_U, N, msg_V_init, msg_W_init)
+#             print_vector(R_est, f"R_est at iteration: {iteration + 1}/{max_in_iter}")
 
-            # Visualize R estimation
-            X_est_vis.append({"step": "2_R_estimation", "v_u_iter": iter_idx, "iteration": iteration, "X_vis": X_vis, "R_est": R_est.copy()})
+#             # Visualize R estimation
+#             X_est_vis.append({"step": "2_R_estimation", "out_iter": iter_idx, "iteration": iteration, "X_vis": X_vis, "R_est": R_est.copy()})
 
-        V_U_coeff = (V_U_coeff * 0.5)
+#         V_U_coeff = (V_U_coeff * 0.5)
 
-    return R_est, X_est, X_est_vis
+#     return R_est, X_est, X_est_vis

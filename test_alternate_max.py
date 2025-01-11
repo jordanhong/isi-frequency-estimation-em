@@ -69,7 +69,7 @@ def test_estimate_R(theta, setup_data):
     data = setup_data
     
     # Estimate X based on fixed R and observations
-    R_est = estimate_R(data["X_true"], data["R_edges"], data["V_U"], data["N"])
+    R_est = estimate_R(data["X_true"], data["R_edges"], data["V_U"], data["N"], data["msg_V_init"], data["msg_W_init"])
     R_true = np.array([[np.cos(theta)], [np.sin(theta)]])
 
     ## print out states

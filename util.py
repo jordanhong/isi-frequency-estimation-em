@@ -1,6 +1,17 @@
 import numpy as np
 # import cupy as np
+from params import *
 
+## Parameter setup
+def setup_params(sigma2_Z):
+    infty = sigma2_Z*1e8 # when sigma2_Z = 5e-12, eps = 5e-6
+    # eps   = min(sigma2_Z*1e6, 1e-6)
+    eps   = sigma2_Z*1e-6
+    msg_V_init = infty*np.eye(2)
+    msg_W_init = eps*np.eye(2)
+    V_U_coeff = sigma2_Z*1e3
+
+    return msg_V_init,msg_W_init,V_U_coeff
 ## Data generation and curation
 def generate_ground_truth(R_true, X_true_0, N):
     X_true = [X_true_0] + [X_init for _ in range(N)]
