@@ -17,18 +17,18 @@ plt.rc('text.latex', preamble=r'\usepackage{amsmath}')
 theta = np.pi/4
 X_true_0 = np.array([[1/np.sqrt(2)], [1/np.sqrt(2)]])
 
-sigma2_Z, N = 1e-04, 20
+sigma2_Z = 2.15e-3
 ############################################
-
-max_in_iter = 50
-max_out_iter = 2
+N = 20
+max_out_iter = 3
+max_in_iter = 100
 
 
 plot = True
 # plot = False
 
 # Fix random seed
-np.random.seed(8)
+np.random.seed(9)
 
 ## Data curation
 R_true = np.array([[np.cos(theta)], [np.sin(theta)]])
@@ -45,43 +45,45 @@ sqe_em = squared_error(R_est_em, R_true)
 sqe_am = squared_error(R_est_am, R_true)
 print(f"sigma2_Z = {sigma2_Z:.2e}, EM L2 error= {sqe_em:.2e}, AM L2 error= {sqe_am:.2e}")
 
+def plot_epoch_borders(max_out_iter, max_in_iter):
+    for out_iter in range (1, max_out_iter,1):
+        plt.axvline(x=out_iter*max_in_iter, color='black', linestyle='--', linewidth=1 )  # Vertical line at index 50
+    return
+
 if plot:
     # Plot LL_series
     plt.figure()
     plt.plot(range(len(LL_series)), LL_series, marker='o', linestyle='-', color='b', markersize=2, label=r"EM log-likelihood")
     plt.xlabel('Epoch')
     plt.ylabel('Log-likelihood')
-    plt.axvline(x=50, color='black', linestyle='--', linewidth=1 )  # Vertical line at index 50
-    plt.axvline(x=100, color='black', linestyle='--', linewidth=1)# Vertical line at index 100
+    plot_epoch_borders(max_out_iter, max_in_iter)
     plt.grid(True, which="both", linestyle="--")
     plt.legend()
-    plt.savefig(f"LL_series_N{N}_max_out_iter_{max_out_iter}_max_in_iter_{max_in_iter}.pdf", bbox_inches='tight')
+    plt.savefig(f"plot/LL_series_N{N}_max_out_iter_{max_out_iter}_max_in_iter_{max_in_iter}.pdf", bbox_inches='tight')
     # plt.show()
 
     # Plot theta_series
     plt.figure()
     plt.plot(range(len(theta_series_em)), theta_series_em, marker='s', linestyle='--', color='blue', label=r"EM $\hat{\theta}$", markersize=2)
-    # plt.plot(range(len(theta_series_am)), theta_series_am, marker='s', linestyle='--', color='orange', label=r"AM $\hat{\theta}$",  markersize=2)
-    plt.axvline(x=50, color='black', linestyle='--', linewidth=1)  # Vertical line at index 50
-    plt.axvline(x=100, color='black', linestyle='--', linewidth=1)# Vertical line at index 100
+    plt.plot(range(len(theta_series_am)), theta_series_am, marker='s', linestyle='--', color='orange', label=r"AM $\hat{\theta}$",  markersize=2)
+    plot_epoch_borders(max_out_iter, max_in_iter)
     plt.axhline(y=theta, color='g', linestyle='--', linewidth=2, label=r'True $\theta$')  # Horizontal line
     plt.ylabel(r"$\theta$")
     plt.xlabel('Epoch')
     plt.grid(True, which="both", linestyle="--")
     plt.legend()
-    plt.savefig(f"theta_series_N{N}_max_out_iter_{max_out_iter}_max_in_iter_{max_in_iter}.pdf", bbox_inches='tight')
+    plt.savefig(f"plot/theta_series_N{N}_max_out_iter_{max_out_iter}_max_in_iter_{max_in_iter}.pdf", bbox_inches='tight')
     # plt.show()
 
     # Plot theta_series
     plt.figure()
     plt.plot(range(len(r_norm_series_em)), r_norm_series_em, marker='s', linestyle='--', color='blue', label=r"EM $\lVert\hat{r}\rVert$", markersize=2)
-    # plt.plot(range(len(r_norm_series_am)), r_norm_series_am, marker='s', linestyle='--', color='orange', label=r"AM $\lVert\hat{r}\rVert$",  markersize=2)
-    plt.axvline(x=50, color='black', linestyle='--', linewidth=1)  # Vertical line at index 50
-    plt.axvline(x=100, color='black', linestyle='--', linewidth=1)# Vertical line at index 100
+    plt.plot(range(len(r_norm_series_am)), r_norm_series_am, marker='s', linestyle='--', color='orange', label=r"AM $\lVert\hat{r}\rVert$",  markersize=2)
+    plot_epoch_borders(max_out_iter, max_in_iter)
     plt.axhline(y=1, color='g', linestyle='--', linewidth=2, label=r'True $\lVert r \rVert$')  # Horizontal line
     plt.ylabel(r"$\lVert r \rVert$")
     plt.xlabel('Epoch')
     plt.grid(True, which="both", linestyle="--")
     plt.legend()
-    plt.savefig(f"r_norm_series_{N}_max_out_iter_{max_out_iter}_max_in_iter_{max_in_iter}.pdf", bbox_inches='tight')
+    plt.savefig(f"plot/r_norm_series_{N}_max_out_iter_{max_out_iter}_max_in_iter_{max_in_iter}.pdf", bbox_inches='tight')
     # plt.show()

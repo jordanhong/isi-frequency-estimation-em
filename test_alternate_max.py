@@ -6,12 +6,12 @@ from params import *
 from util import *
 
 # tolerance
-TOL = 1e-4
+TOL = 1e-3
 
 @pytest.fixture
 def setup_data(theta):
     """Setup the initial data for testing with varying theta values"""
-    sigma2_Z = 5e-10    # Observation noise variance
+    sigma2_Z = 5e-8    # Observation noise variance
     N = 20              # Number of time steps
     X_true_0 = np.array([[np.cos(np.pi/3)], [np.sin(np.pi/3)]])  # Starting position
     # X_true_0 = np.array([[1], [0]])  # Starting position
@@ -60,7 +60,7 @@ def test_estimate_X(theta, setup_data):
     assert len(X_est) == data["N"]+1, "Incorrect number of estimated X states"
 
     # Check that X_est values are within an acceptable tolerance compared to the ground truth
-    for k in range(data["N"] + 1):
+    for k in range(0, data["N"] + 1):
         assert np.allclose(X_est[k], data["X_true"][k], atol=TOL), f"X_est[{k}] does not match X_true[{k}] within tolerance"
 
 

@@ -34,8 +34,8 @@ class X_k_edge_MBF:
 
         self.sigma2_Z = sigma2_Z
 
-        self.DEBUG = True
-        # self.DEBUG = False
+        # self.DEBUG = True
+        self.DEBUG = False
 
     def update_A_hat_r (self, r):
         self.A_hat_r = convert_vect_to_rotation_matrix(r)
@@ -54,8 +54,8 @@ class X_k_edge_MBF:
         self.msgf_V = symmetrize(self.msgf_V_X_k_prime - self.msgf_V_X_k_prime @ self.G_dd @ self.msgf_V_X_k_prime)
         # self.msgf_V = self.msgf_V_X_k_prime - self.msgf_V_X_k_prime @ self.G_dd @ self.msgf_V_X_k_prime
 
-        assert(np.linalg.det(self.msgf_V_X_k_prime) >0)
-        assert(np.linalg.det(self.msgf_V) >= 0), f"Negative deteriminant {np.linalg.det(self.msgf_V):.2e}"
+        assert(np.linalg.det(self.msgf_V_X_k_prime) >0), f"Negative deteriminant {np.linalg.det(self.msgf_m_X_k_prime):.2e}"
+        assert(np.linalg.det(self.msgf_V) > 0), f"Negative deteriminant {np.linalg.det(self.msgf_V):.2e}"
         # print(f"G: {G[0,0]}")
         # print_vectors_side_by_side(self.msgf_m_X_k_prime, self.msgf_m, "m_X_k_prime", "msgf_m")
         # print_matrices_side_by_side(self.msgf_V_X_k_prime, self.msgf_V, "msgf_V_X_k_prime", "msgf_V")
@@ -74,8 +74,8 @@ class X_k_edge_MBF:
         print_matrix(self.msgf_V, "self.msgf_V")
         """
         # print_matrices_side_by_side(self.msgf_V_X_k_prime, self.msgf_V,"self.msgf_V_X_k_prime", "self.msgf_V")
-        print_matrix(self.msgf_V, "msgf_V")
-        print_vector(self.msgf_m, "msgf_m")
+        # print_matrix(self.msgf_V, "msgf_V")
+        # print_vector(self.msgf_m, "msgf_m")
         # print(f"det(self.msgf_V_X_k_prime): {np.linalg.det(self.msgf_V_X_k_prime)}")
         # if (np.linalg.det(self.msgf_V_X_k_prime) <0):
         #     print("ERROR: negative determinant")
@@ -115,9 +115,14 @@ class X_k_edge_MBF:
         # assert(np.linalg.det(self.W_tilde) > 0), f"Negative determinant {np.linalg.det(self.W_tilde):.2e}"
         # print_matrix(X_k_plus_1.W_tilde_prime, f"X_k_plus_1.W_tilde_prime (rank {np.linalg.matrix_rank(X_k_plus_1.W_tilde_prime)}, det = {np.linalg.det(X_k_plus_1.W_tilde_prime):.2e})")
         # assert(np.linalg.matrix_rank(X_k_plus_1.W_tilde_prime) == 2), f"X_k_plus_1.W_tilde_prime (rank {np.linalg.matrix_rank(X_k_plus_1.W_tilde_prime)})"
-        assert(np.linalg.det(X_k_plus_1.W_tilde_prime) != 0), f"X_k_plus_1.W_tilde_prime (rank {np.linalg.matrix_rank(X_k_plus_1.W_tilde_prime)})"
         # assert(np.linalg.matrix_rank(self.W_tilde) == 2), f"self.W_tilde (rank {np.linalg.matrix_rank(self.W_tilde)})"
-        assert(np.linalg.det(self.W_tilde) != 0), f"self.W_tilde (rank {np.linalg.matrix_rank(self.W_tilde)})"
+        if (np.linalg.det(X_k_plus_1.W_tilde_prime) == 0):
+            print_matrix(X_k_plus_1.W_tilde, "X_k_plus_1.W_tilde")
+        if (np.linalg.det(self.W_tilde) == 0):
+            print_matrix(self.W_tilde, "self.W_tilde")
+
+        assert(np.linalg.det(X_k_plus_1.W_tilde_prime) > 0), f"X_k_plus_1.W_tilde_prime (det {np.linalg.det(X_k_plus_1.W_tilde_prime):2e})"
+        assert(np.linalg.det(self.W_tilde) > 0), f"self.W_tilde (det {np.linalg.det(self.W_tilde):.2e})"
     
         # if self.DEBUG:
             # print_matrix(X_k_plus_1.W_tilde_prime, f"X_k_plus_1.W_tilde_prime (rank {np.linalg.matrix_rank(X_k_plus_1.W_tilde_prime)})")
@@ -138,8 +143,9 @@ class X_k_edge_MBF:
             # print_vector(self.msgf_V @ self.xi_tilde, "sub vect")
             # print_matrices_side_by_side( self.msgf_V, self.W_tilde, "X_k.msgf_V", "self.W_tilde")
             # print_matrix( self.msgf_V @ self.W_tilde @ self.msgf_V, "self.msgf_V @ self.W_tilde @ self.msgf_V")
-            print_vector(self.m, "self.m")
-            print_matrix( self.V, "self.V")
+            # print_vector(self.m, "self.m")
+            # print_matrix( self.V, "self.V")
+            pass
         
         ## Assertion
         # assert np.all(np.diagonal(self.V) >= 0), f"Matrix diagonal contains negative values: {np.diagonal(self.V)}"
@@ -165,7 +171,7 @@ class R_k_edge:
         self.A_hat_x_k_minus_1 = np.eye(2)
         self.x_k = X_init # Fixed value for X_k (since X_k = \hat{x}_k)
         self.x_k_minus_1 = X_init # Fixed value for X_k (since X_k = \hat{x}_k)
-        self.DEBUG = True
+        self.DEBUG = False 
 
     def update_x_hat_and_A(self, x_k, x_k_minus_1):
         self.x_k = x_k
@@ -197,7 +203,7 @@ class R_k_edge:
             # print(f"   X_k_minus_1.m.T @ X_k.m: {convert_1x1_matrix_to_scalar(X_k_minus_1.m.T @ X_k.m):.2e}")
             # print(f"   X_k_minus_1.m.T @ P.T @ X_k.m: {convert_1x1_matrix_to_scalar( X_k_minus_1.m.T @ P.T @ X_k.m):.2e}")
             msgb_m = 1/self.msgb_W_norm_coeff * self.msgb_xi_norm
-            print_vectors_side_by_side(self.msgb_xi_norm, msgb_m,  "msgb_xi_norm", "msgb_m")
+            # print_vectors_side_by_side(self.msgb_xi_norm, msgb_m,  "msgb_xi_norm", "msgb_m")
             # print(f"   X_k_minus_1.m.T @ X_k.m: {self.msgb_xi_norm[0,0]:.2e}")
             # print(f"   X_k_minus_1.m.T @ P.T @ X_k.m: {self.msgb_xi_norm[1,0]:.2e}")
             print(f"   (X_k_minus_1.m.T @ X_k.m, X_k_minus_1.m.T @ P.T @ X_k.m): ({self.msgb_xi_norm[0,0]:.2e},{self.msgb_xi_norm[1,0]:.2e})")
@@ -247,7 +253,8 @@ def estimate_X(R_est, X_edges, y, V_U, N, sigma2_Z, msg_V_init, msg_W_init, DEBU
         X_edges[k].update_A_hat_r(R_est)
 
     for k in range(1, N+1): # k = 1, ..., N
-        print(f"Forward pass on X_{k}")
+        if (DEBUG):
+            print(f"Forward pass on X_{k}")
         X_edges[k].forward(X_edges[k - 1], y[k], V_U)
 
     # for k in range(N-1, -1, -1):
@@ -280,7 +287,7 @@ def estimate_R(X_est, R_edges, V_U, N, msg_V_init, msg_W_init):
     # print(f"Step 2: Assume fixed X, estimate R.")
     # print(len(R_edges))
     for k in range(N, 0, -1):
-        print(f"Backward pass on R_{k}")
+        # print(f"Backward pass on R_{k}")
         # Backward R[N], ..., R[1]
         R_edges[k].backward(R_edges[k], V_U)
 
@@ -300,7 +307,7 @@ def alternate_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_true
     X_edges = [X_k_edge_MBF(sigma2_Z, msg_V_init, msg_W_init) for _ in range(N+1)]
     R_edges = [R_k_edge(msg_V_init, msg_W_init) for _ in range(N+1)]
 
-    DEBUG = True
+    DEBUG = False 
     R_est = R_init
     theta_series = []
     r_norm_series = []
@@ -310,7 +317,7 @@ def alternate_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_true
         print(f"Outer iteration {out_iter + 1}/{max_out_iter}")
         for in_iter in range (max_in_iter):
             print(f"Iteration {in_iter + 1}/{max_in_iter}")
-            print_vector(R_est, "Current R_est")
+            # print_vector(R_est, "Current R_est")
             V_U = V_U_coeff * np.eye(2)
 
             ## Step 1: Estimate X while keeping R fixed
@@ -319,7 +326,8 @@ def alternate_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_true
             # Print out X states
             for k in range(0, N+1):
                 m_est = X_est[k]
-                print_vectors_side_by_side_float(m_est, X_true[k], f"X_{k}.m", f"True X_{k}")
+                if (DEBUG):
+                    print_vectors_side_by_side_float(m_est, X_true[k], f"X_{k}.m", f"True X_{k}")
 
             # Visualize X estimation
             X_vis = [{"m": x.marginal(), "V": x.V} for x in X_edges[1:]]
@@ -329,7 +337,7 @@ def alternate_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_true
             R_est = estimate_R(X_est, R_edges, V_U, N, msg_V_init, msg_W_init)
 
             # Print out R estimate
-            print_vectors_side_by_side(R_est, R_true, ">R_est", "R_true")
+            # print_vectors_side_by_side(R_est, R_true, ">R_est", "R_true")
 
             # Additional logs
             theta_hat = vector_angle(R_est)
@@ -341,13 +349,13 @@ def alternate_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_true
 
             ## Calculate Squared Error
             sqe = squared_error(R_est, R_true)
-            print(f"sqe: {sqe:.2e}")
+            # print(f"sqe: {sqe:.2e}")
 
-            R_est = R_est
 
 
 
         V_U_coeff = (V_U_coeff * 0.5)
+        print_vectors_side_by_side(R_est, R_true, f"sqe: {sqe:.2e} >R_est", "R_true")
 
     return R_est, X_est, X_est_vis, theta_series, r_norm_series
 

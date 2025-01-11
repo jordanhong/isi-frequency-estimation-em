@@ -22,8 +22,8 @@ class R_k_edge_EM:
         self.m = R_init
         self.V = msg_V_init.copy()
 
-        self.DEBUG = True
-        # self.DEBUG = False
+        # self.DEBUG = True
+        self.DEBUG = False
 
     def update_marginal(self, m):
         self.m = m
@@ -122,7 +122,7 @@ def expectation_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_tr
     X_edges = [X_k_edge_MBF(sigma2_Z,msg_V_init, msg_W_init) for k in range(N + 1)]
     R_edges = [R_k_edge_EM(msg_V_init, msg_W_init) for k in range(N+1)]
 
-    DEBUG = True
+    DEBUG = False 
     R_est = R_init
     LL_series = []
     theta_series = []
@@ -132,7 +132,7 @@ def expectation_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_tr
         print(f"Outer iteration {out_iter + 1}/{max_out_iter}")
         for in_iter in range (max_in_iter):
             print(f"Iteration {in_iter + 1}/{max_in_iter}")
-            print_vector(R_est, "Current R_est")
+            # print_vector(R_est, "Current R_est")
             V_U = V_U_coeff * np.eye(2)
 
             ## Step 1: Soft-estimate X while keeping R fixed
@@ -141,7 +141,8 @@ def expectation_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_tr
             X_est = estimate_X(R_est, X_edges, y_obs, V_U, N, sigma2_Z, msg_V_init, msg_W_init, DEBUG)
             for k in range(0, N+1):
                 m_est = X_est[k]
-                print_vectors_side_by_side_float(m_est, X_true[k], f"X_{k}.m", f"True X_{k}")
+                if (DEBUG):
+                    print_vectors_side_by_side_float(m_est, X_true[k], f"X_{k}.m", f"True X_{k}")
 
             # Visualize X expectation
             X_vis = [{"m": x.marginal(), "V": x.V} for x in X_edges[1:]]
@@ -155,7 +156,7 @@ def expectation_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_tr
                 y_k = y_obs[k]
                 LL_k = X_edges[k].em_log_likelihood(y_k)
                 LL = LL + LL_k
-            print(f"Log-likelihood: {LL:.6e}")
+            # print(f"Log-likelihood: {LL:.6e}")
             LL_series = LL_series + [LL]
             ##################
 
@@ -176,7 +177,7 @@ def expectation_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_tr
                 # Backward R[N], ..., R[1]
                 # print("===================================")
                 # print("")
-                print(f"Backward pass on R_{k}")
+                # print(f"Backward pass on R_{k}")
                 R_edges[k].backward(X_edges[k-1], X_edges[k], V_U_coeff)
             ##################
 
@@ -189,8 +190,8 @@ def expectation_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_tr
             theta_true = vector_angle(R_true)
             theta_series = theta_series + [theta_hat]
             r_norm_series = r_norm_series + [np.linalg.norm(R_est)]
-            print_vectors_side_by_side(R_est, R_true, f"sqe: {sqe:.2e} >R_est", "R_true")
-            print(f"theta_hat: {theta_hat:.3e}; theta_true: {theta_true:.3e}")
+            # print_vectors_side_by_side(R_est, R_true, f"sqe: {sqe:.2e} >R_est", "R_true")
+            # print(f"theta_hat: {theta_hat:.3e}; theta_true: {theta_true:.3e}")
 
             # Visualize R estimation
             X_est_vis.append({"step": "2_R_maximization", "out_iter": out_iter, "in_iter": in_iter, "X_vis": X_vis, "R_est": R_est.copy()})
@@ -198,6 +199,7 @@ def expectation_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_tr
 
 
         V_U_coeff = V_U_coeff * 0.8
+        print_vectors_side_by_side(R_est, R_true, f"sqe: {sqe:.2e} >R_est", "R_true")
 
     return R_est, LL_series, X_est_vis, theta_series, r_norm_series
 

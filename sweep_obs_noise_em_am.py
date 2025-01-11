@@ -11,23 +11,22 @@ from params import *
 ####################
 theta = np.pi/8
 # Starting position
-X_true_0 = np.array([[1], [0]])
-# X_true_0 = np.array([[1/np.sqrt(2)], [1/np.sqrt(2)]])
+# X_true_0 = np.array([[1], [0]])
+X_true_0 = np.array([[1/np.sqrt(2)], [1/np.sqrt(2)]])
 
 N = 20
-max_out_iter, max_in_iter = 50, 500
-# max_out_iter, max_in_iter = 5, 50
+max_out_iter, max_in_iter = 50, 100
+# max_out_iter, max_in_iter = 5, 100
 
 np.random.seed(7)
 
-plot = False
-# plot = True
-num_trials = 1
+num_trials = 10
 ####################
 
 
-# sigma2_Z_values = np.logspace(-5, 2, num=10)
-sigma2_Z_values = [1e-4]
+sigma2_Z_values = np.logspace(-5, 2, num=10)
+# sigma2_Z_values = [1e-5]
+# sigma2_Z_values = [7.74e-02]
 
 # Initialize storage for all SQE values
 all_sqe_em = {}  # Dictionary to store lists of SQE for each sigma2_Z
@@ -78,36 +77,8 @@ for sigma2_Z in sigma2_Z_values:
     mean_sqe_values_am.append(mean_sqe_am)
     print(f"sigma2_Z = {sigma2_Z:.2e}, EM L2 error= {mean_sqe_em:.2e}, AM L2 error= {mean_sqe_am:.2e}")
 
-with open('sqe_data_N_{N}_max_out_iter_{max_out_iter}_max_in_iter_{max_in_iter}.json', 'w') as file:
+with open(f"data/sqe_data_N_{N}_max_out_iter_{max_out_iter}_max_in_iter_{max_in_iter}.json", 'w') as file:
     json.dump({'all_sqe_em': all_sqe_em, 'all_sqe_am': all_sqe_am}, file)
 
-print("Data saved to sqe_data.json")
-
-
-
-# Plotting section
-if plot:
-    plt.figure()
-
-    # Mean line for EM
-    plt.loglog(sigma2_Z_values, mean_sqe_values_em, marker='o', label='EM Mean', color='blue')
-    # Mean line for AM
-    plt.loglog(sigma2_Z_values, mean_sqe_values_am, marker='o', label='AM Mean', color='orange')
-
-    # Scatter plot for all SQE values
-    for sigma2_Z in sigma2_Z_values:
-        plt.scatter([sigma2_Z] * len(all_sqe_em[sigma2_Z]), all_sqe_em[sigma2_Z], alpha=0.3, color='blue', label='EM Points' if sigma2_Z == sigma2_Z_values[0] else "")
-        plt.scatter([sigma2_Z] * len(all_sqe_am[sigma2_Z]), all_sqe_am[sigma2_Z], alpha=0.3, color='orange', label='AM Points' if sigma2_Z == sigma2_Z_values[0] else "")
-
-
-    # Axis labels and title
-    plt.xlabel('sigma2_Z')
-    plt.ylabel('Mean Squared L2 Error (sqe) |r - \hat{r}|^2')
-    plt.title('Log-Log plot of Mean sqe vs sigma2_Z')
-    plt.grid(True, which="both", ls="--")
-    plt.legend()
-    plt.savefig(f"scatter_em_am_sweep_N{N}_max_iter_50_max_pass_{max_pass}.pdf", bbox_inches='tight')
-    # plt.show()
-
-
+print(f"Data saved to data/sqe_data_N_{N}_max_out_iter_{max_out_iter}_max_in_iter_{max_in_iter}.json")
 

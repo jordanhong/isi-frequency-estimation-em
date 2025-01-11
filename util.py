@@ -16,9 +16,15 @@ def setup_params(sigma2_Z):
     # V_U_coeff = sigma2_Z*1e2
 
     ### Config 3 (passes)
-    infty = sigma2_Z*1e7
-    eps   = sigma2_Z*1e1
-    V_U_coeff = sigma2_Z*1e2
+    # infty = sigma2_Z*1e7
+    # eps   = sigma2_Z*1e1
+    # V_U_coeff = sigma2_Z*1e2
+
+    infty = min(sigma2_Z*1e7, 1e6)
+    # eps   = min(sigma2_Z*1e2, 1e-6)
+    eps   = min(sigma2_Z*1e-6, 1e-6)
+    V_U_coeff = sigma2_Z*1e3
+    # V_U_coeff = sigma2_Z*1e4
 
     msg_V_init = infty*np.eye(2)
     msg_W_init = eps*np.eye(2)
