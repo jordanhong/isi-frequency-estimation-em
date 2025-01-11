@@ -1,6 +1,7 @@
 import numpy as np
 # import cupy as np
 from params import *
+import matplotlib.pyplot as plt
 
 ## Parameter setup
 def setup_params(sigma2_Z):

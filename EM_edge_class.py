@@ -100,15 +100,20 @@ class R_k_edge_EM:
 def expectation_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_true, X_true):
     # msg_V_init,msg_W_init,V_U_coeff = setup_params(sigma2_Z)
     ## Params
+    ############
+    infty = sigma2_Z*1e6
+    eps   = sigma2_Z*1e-3
+    V_U_coeff = sigma2_Z*1e1
+    ############
     # infty = sigma2_Z*1e9 # when sigma2_Z = 5e-12, eps = 5e-6
-    infty = sigma2_Z*1e6 # when sigma2_Z = 5e-12, eps = 5e-6
-    eps   = sigma2_Z*1e-2
+    # eps   = sigma2_Z*1e-2
+    # eps   = sigma2_Z*1e-3
+    # # msg_W_init = np.zeros((2,2))
+    # V_U_coeff = sigma2_Z*1e3 # Need atleast +2 to have non-decreasing LL (for 1.29e-2)
+    # V_U_coeff = sigma2_Z*1e2 # Need atleast +2 to have non-decreasing LL (for 1.29e-2)
+    # # V_U_coeff = sigma2_Z*1e-6 # For 7.74e0-2, this gives better result but doesn't have good LL
     msg_V_init = infty*np.eye(2)
     msg_W_init = eps*np.eye(2)
-    # # msg_W_init = np.zeros((2,2))
-    V_U_coeff = sigma2_Z*1e2 # Need atleast +2 to have non-decreasing LL (for 1.29e-2)
-    # # V_U_coeff = sigma2_Z*1e-6 # For 7.74e0-2, this gives better result but doesn't have good LL
-    # # V_U_coeff = sigma2_Z*1e1 # For 7.74e0-2, this gives better result but doesn't have good LL
     ####
 
 
@@ -138,7 +143,7 @@ def expectation_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_tr
                 m_est = X_est[k]
                 print_vectors_side_by_side_float(m_est, X_true[k], f"X_{k}.m", f"True X_{k}")
 
-            # Visualize X expectation 
+            # Visualize X expectation
             X_vis = [{"m": x.marginal(), "V": x.V} for x in X_edges[1:]]
             X_est_vis.append({"step": "1_X_expectation", "out_iter": out_iter, "in_iter": in_iter, "X_vis": X_vis, "R_est": R_est.copy()})
             ##################
