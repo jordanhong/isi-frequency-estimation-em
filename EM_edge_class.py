@@ -103,7 +103,9 @@ def expectation_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_tr
     ############
     infty = sigma2_Z*1e6
     eps   = sigma2_Z*1e-3
-    V_U_coeff = sigma2_Z*1e1
+    V_U_coeff = sigma2_Z*1e2
+    msg_V_init = infty*np.eye(2)
+    msg_W_init = eps*np.eye(2)
     ############
     # infty = sigma2_Z*1e9 # when sigma2_Z = 5e-12, eps = 5e-6
     # eps   = sigma2_Z*1e-2
@@ -112,8 +114,6 @@ def expectation_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_tr
     # V_U_coeff = sigma2_Z*1e3 # Need atleast +2 to have non-decreasing LL (for 1.29e-2)
     # V_U_coeff = sigma2_Z*1e2 # Need atleast +2 to have non-decreasing LL (for 1.29e-2)
     # # V_U_coeff = sigma2_Z*1e-6 # For 7.74e0-2, this gives better result but doesn't have good LL
-    msg_V_init = infty*np.eye(2)
-    msg_W_init = eps*np.eye(2)
     ####
 
 
