@@ -50,6 +50,7 @@ pytest test_alternate_max.py
 - The underlying Python scripts are defined in the Makefile target definitions. Refer to the Makefile for further details.
 - The `setup_params()` function in `util.py` plays a critical role in ensuring floating-point precision. It initializes variance matrix messages and state noise variance based on the observation noise $\sigma^2_Z$.
 - If you encounter assertion failures or weird results (e.g., decreasing log-likelihood plots), consider experimenting with the scaling factors in `setup_params()`. Empirically, if log-likelihood is decreasing, increasing $\sigma^2_U$ helps.
+- It is recommended to run the pytest after changing setup_params, it will check for floating point and estimation precisions.
 
 
 
