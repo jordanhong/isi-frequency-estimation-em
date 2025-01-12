@@ -20,7 +20,7 @@ make init
 ### Experiments
 Individual experiments can be run through the following make targets.  Alternatively, you can also just run the python scripts (see Makefile).
 
-- **`single`**: Runs a single experiment for both EM and AM algorithms with a fixed $\sigma^2$. This target also generates plots for:
+- **`single`**: Runs a single experiment for both EM and AM algorithms with a fixed $\sigma^2_Z$. This target also generates plots for:
   - Log-likelihood
   - Estimated r angle (theta)
   - Estimated r norm
