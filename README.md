@@ -20,11 +20,11 @@ make init
 ### Experiments
 Individual experiments can be run through the following make targets.  Alternatively, you can also just run the python scripts (see Makefile).
 
-- **`single`**: Runs a single experiment for both EM and AM algorithms with a fixed $\sigma^2$. This target also generates plots for:
+- **`single`**: Runs a single experiment for both EM and AM algorithms with a fixed $\sigma^2_Z$. This target also generates plots for:
   - Log-likelihood
   - Estimated r angle (theta)
   - Estimated r norm
-  The output directory is `plot/single`.
+  The output directory is `plot/single`. The vertical bars in the plots denote end of one outer loop. Note the default setting has only 3 outer loop iterations and EM has not converged yet.
 
 - **`visual`**: Executes two small experiments to generate snapshot visualizations of EM and AM. The output directories are `plot/exp1/` (case when both EM and AM works) and `plot/exp2/` (case when AM works but EM fails).
 
