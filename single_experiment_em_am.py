@@ -2,10 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from AM_edge_class import X_k_edge_MBF
 from EM_edge_class import R_k_edge_EM
-from AM_edge_class import print_matrix, convert_vect_to_rotation_matrix, generate_ground_truth, generate_noisy_obs, estimate_X, estimate_R, squared_error,print_vectors_side_by_side,print_vector,print_vectors_side_by_side_float
 from EM_edge_class import expectation_maximization
 from AM_edge_class import alternate_maximization
 from params import *
+from util import *
 import random
 
 """

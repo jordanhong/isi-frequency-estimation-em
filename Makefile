@@ -28,11 +28,13 @@ single:
 visual:
 	@echo "Running a sets of small experiments to generate demo visualization."
 	python3 visualization_em_am.py
-# Target for sweeping experiments
+
 .PHONY: sweep
 sweep:
 	@echo "Running a parameter sweep of observation noise"
 	python3 sweep_obs_noise_em_am.py
+	@echo "Plotting parameter sweep of observation noise"
+	python3 plot_em_am_sweep.py
 
 .PHONY: clean
 clean:
