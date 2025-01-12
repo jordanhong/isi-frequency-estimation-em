@@ -21,10 +21,12 @@ def setup_data(theta):
     X_true = generate_ground_truth(R_true, X_true_0, N)
     y = generate_noisy_obs(X_true, C, sigma2_Z, N)
 
+    DEBUG = False
+
     # Initialize edges
     msg_V_init,msg_W_init,V_U_coeff = setup_params(sigma2_Z)
-    X_edges = [X_k_edge_MBF(sigma2_Z,msg_V_init,msg_W_init) for k in range(N + 1)]
-    R_edges = [R_k_edge(msg_V_init,msg_W_init) for k in range(N+1)]
+    X_edges = [X_k_edge_MBF(sigma2_Z,msg_V_init,msg_W_init, DEBUG) for k in range(N + 1)]
+    R_edges = [R_k_edge(msg_V_init,msg_W_init, DEBUG) for k in range(N+1)]
     V_U = V_U_coeff * np.eye(2)
 
     return {
@@ -47,8 +49,9 @@ def test_estimate_X(theta, setup_data):
 
     R_true = np.array([[np.cos(theta)], [np.sin(theta)]])
 
+    DEBUG = False
     # Estimate X based on fixed R and observations
-    X_est = estimate_X(R_true, data["X_edges"], data["y"], data["V_U"], data["N"], data["sigma2_Z"], data["msg_V_init"], data["msg_W_init"], True)
+    X_est = estimate_X(R_true, data["X_edges"], data["y"], data["V_U"], data["N"], data["sigma2_Z"], data["msg_V_init"], data["msg_W_init"], DEBUG)
     ## print out states
     print(f"Testing with theta: {theta*180/np.pi} deg")
     for k in range(1, data["N"]+1):
@@ -69,8 +72,9 @@ def test_estimate_R(theta, setup_data):
     """Test estimate_R for varying theta values"""
     data = setup_data
 
+    DEBUG = False
     # Estimate X based on fixed R and observations
-    R_est = estimate_R(data["X_true"], data["R_edges"], data["V_U"], data["N"], data["msg_V_init"], data["msg_W_init"])
+    R_est = estimate_R(data["X_true"], data["R_edges"], data["V_U"], data["N"], data["msg_V_init"], data["msg_W_init"], DEBUG)
     R_true = np.array([[np.cos(theta)], [np.sin(theta)]])
 
     ## print out states

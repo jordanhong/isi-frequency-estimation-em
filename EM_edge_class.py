@@ -6,24 +6,16 @@ import matplotlib.pyplot as plt
 
 P = np.array([[0, -1], [1, 0]])
 class R_k_edge_EM:
-    def __init__(self, msg_V_init, msg_W_init):
-        # Upwards message
-        self.msgb_W =msg_W_init.copy()
-        self.msgb_xi = np.array([[0], [0]])
-
+    def __init__(self, msg_V_init, msg_W_init, DEBUG=False):
         # Normalized upwards message
         self.msgb_W_norm_coeff = 0
         self.msgb_xi_norm = np.array([[0], [0]])
-
-        # Constants
-        # self.A = convert_vect_to_rotation_matrix(X_init)
 
         # Marginals
         self.m = R_init
         self.V = msg_V_init.copy()
 
-        # self.DEBUG = True
-        self.DEBUG = False
+        self.DEBUG = DEBUG
 
     def update_marginal(self, m):
         self.m = m
@@ -33,71 +25,23 @@ class R_k_edge_EM:
         A_r = convert_vect_to_rotation_matrix(self.m)
 
         # W matrix
-        # self.msgb_W_norm_coeff = np.trace(X_k_minus_1.V + X_k_minus_1.m @ X_k_minus_1.m.T )
         self.msgb_W_norm_coeff = np.trace(X_k_minus_1.V) + convert_1x1_matrix_to_scalar(X_k_minus_1.m.T @ X_k_minus_1.m)
-        self.msgb_W = 1/V_U_coeff * self.msgb_W_norm_coeff * np.eye(2)
 
         # Xi
         msgb_V_X_k_prime = np.linalg.inv(X_k.W_tilde_prime) - X_k.msgf_V_X_k_prime # msgb_V_X_k_prime = (W_tilde_prime^-1 - msgf_V_X_k_prime)
-        # V_X_k_prime_X_k_minus_1_T = msgb_V_X_k_prime.T @ X_k.W_tilde_prime.T @ A_r @ X_k_minus_1.msgf_V.T
         V_X_k_minus_1_X_k_prime_T = X_k_minus_1.msgf_V @ A_r.T @ X_k.W_tilde_prime @ msgb_V_X_k_prime
-        """
-        trace_arg_1 =  V_X_k_minus_1_X_k_prime_T + X_k.m @ X_k_minus_1.m.T
-        trace_arg_2 = P.T @ trace_arg_1
-        Exp_X_k_minus_1_T_X_k_prime = np.trace(trace_arg_1)
-        Exp_X_k_minus_1_T_P_T_X_k_prime = np.trace( trace_arg_2 )
-        """
         Exp_X_k_minus_1_T_X_k_prime = np.trace(V_X_k_minus_1_X_k_prime_T) + X_k_minus_1.m.T @ X_k.m
         Exp_X_k_minus_1_T_P_T_X_k_prime = np.trace(V_X_k_minus_1_X_k_prime_T @ P) + X_k_minus_1.m.T @ P.T @ X_k.m
-        # Exp_X_k_minus_1_T_X_k_prime = X_k_minus_1.m.T @ X_k.m
-        # Exp_X_k_minus_1_T_P_T_X_k_prime = X_k_minus_1.m.T @ P.T @ X_k.m
-
-
-        # self.msgb_xi_norm = np.array([ [ Exp_X_k_minus_1_T_X_k_prime], [Exp_X_k_minus_1_T_P_T_X_k_prime]])
         self.msgb_xi_norm = np.vstack((Exp_X_k_minus_1_T_X_k_prime, Exp_X_k_minus_1_T_P_T_X_k_prime))
-        self.msgb_xi = 1/V_U_coeff * self.msgb_xi_norm
 
-        """
-        print_matrix(X_k.W_tilde_prime, "W_X_k_tilde_prime")
-        print_vectors_side_by_side(msgb_m, msgb_m_prime, "msgb_m", "msgb_m_prime")
-        print_vector(self.msgb_xi, "msgb_xi")
-        print_vector(X_k_minus_1.m, "X_k_minus_1.m")
-        print_vectors_side_by_side(X_k.m, X_k_minus_1.m, "X_k.m", "X_k_minus_1.m")
-        print_matrices_side_by_side(msgb_V_X_k_prime ,X_k_minus_1.msgf_V.T, "msgb_V_X_k_prime", "X_k_minus_1.msgf_V.T")
-        print_matrices_side_by_side(X_k.W_tilde_prime, X_k.msgf_V_X_k_prime, "X_k.W_tilde_prime", "X_k.msgf_V_X_k_prime")
-        """
         if (self.DEBUG):
-            print("------------")
             print(f"R_k.msgb_W_norm_coeff: {self.msgb_W_norm_coeff:.2f}")
-            # print_vector(X_k_minus_1.m, "   X_k_minus_1.m")
-            print(f"   X_k_minus_1.m.T @ X_k_minus_1.m: {convert_1x1_matrix_to_scalar(X_k_minus_1.m.T @ X_k_minus_1.m):.2f}")
-            print(f"   tr(X_k_minus_1.V): {np.trace(X_k_minus_1.V):.2f} ")
-            print_matrices_side_by_side(X_k_minus_1.msgf_V, X_k_minus_1.W_tilde, "   X_k_minus_1.msgf_V", "X_k_minus_1.W_tilde")
-            print_matrix(X_k_minus_1.V, "   X_k_minus_1.V")
-            print("------------")
-            # print_matrix(X_k_minus_1.V, "    X_k_minus_1.V")
-            # print_matrix(X_k_minus_1.m @ X_k_minus_1.m.T, "   m@m.T")
             msgb_m = 1/self.msgb_W_norm_coeff * self.msgb_xi_norm
             print_vectors_side_by_side(self.msgb_xi_norm, msgb_m,  "msgb_xi_norm", "msgb_m")
-            print(f"   (X_k_minus_1.m.T @ X_k.m, X_k_minus_1.m.T @ P.T @ X_k.m): ({convert_1x1_matrix_to_scalar(X_k_minus_1.m.T @ X_k.m):.2e},{convert_1x1_matrix_to_scalar( X_k_minus_1.m.T @ P.T @ X_k.m):.2e})")
-            # print(f"   X_k_minus_1.m.T @ P.T @ X_k.m: {convert_1x1_matrix_to_scalar( X_k_minus_1.m.T @ P.T @ X_k.m):.2e}")
-            print(f"   (trace1, trace2) = ({np.trace(V_X_k_minus_1_X_k_prime_T):.2e}, {np.trace(V_X_k_minus_1_X_k_prime_T @ P):.2e})")
-            print_matrices_side_by_side(V_X_k_minus_1_X_k_prime_T, V_X_k_minus_1_X_k_prime_T @ P, "V_X_k_minus_1_X_k_prime_T", "V_X_k_minus_1_X_k_prime_T @ P")
-            # print(f"Exp_X_k_minus_1_T_X_k_prime: {Exp_X_k_minus_1_T_X_k_prime[0, 0]:.2f}")
-            # print(f"Exp_X_k_minus_1_T_P_T_X_k_prime: {Exp_X_k_minus_1_T_P_T_X_k_prime[0,0]:.2f}")
-            # print_vectors_side_by_side(X_k.m, X_k_minus_1.m, "X_k.m", "X_k_minus_1.m", 4)
-            # print_matrix(X_k.m @ X_k_minus_1.m.T, "    X_k.m @ X_k_minus_1.m.T")
-            # print(f"    (Exp_X_k_minus_1_T_X_k_prime, Exp_X_k_minus_1_T_P_T_X_k_prime) = ({Exp_X_k_minus_1_T_X_k_prime:.2e},  {Exp_X_k_minus_1_T_P_T_X_k_prime:.2e})")
-            # print_matrix(X_k_minus_1.msgf_V, "    X_k_minus_1.msgf_V")
-            # print_matrix(A_r, "    A_r")
-            # print_matrix(X_k.W_tilde_prime, "    X_k.W_tilde_prime")
-            # print_matrix(msgb_V_X_k_prime, "    msgb_V_X_k_prime")
-            # print_matrices_side_by_side( V_X_k_prime_X_k_minus_1_T + X_k.m @ X_k_minus_1.m.T, P.T @ (V_X_k_prime_X_k_minus_1_T + X_k.m @ X_k_minus_1.m.T), "trace 1 arg", "trace 2 arg")
-
 
         return self
 
-def expectation_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_true, X_true):
+def expectation_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_true, X_true, DEBUG=False):
     msg_V_init,msg_W_init,V_U_coeff = setup_params(sigma2_Z)
     ## Params
     ############
@@ -119,10 +63,9 @@ def expectation_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_tr
 
     X_est_vis = []
 
-    X_edges = [X_k_edge_MBF(sigma2_Z,msg_V_init, msg_W_init) for k in range(N + 1)]
-    R_edges = [R_k_edge_EM(msg_V_init, msg_W_init) for k in range(N+1)]
+    X_edges = [X_k_edge_MBF(sigma2_Z,msg_V_init, msg_W_init, DEBUG) for k in range(N + 1)]
+    R_edges = [R_k_edge_EM(msg_V_init, msg_W_init, DEBUG) for k in range(N+1)]
 
-    DEBUG = False 
     R_est = R_init
     LL_series = []
     theta_series = []
@@ -165,7 +108,7 @@ def expectation_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_tr
             # Initialize R edges with correct mean.
             # This is required because we need the correct rotation matrix to compute V_X_{k-1}_V_X_k'T
             for k in range(0, N):
-                R_edges[k].__init__(msg_V_init, msg_W_init)
+                R_edges[k].__init__(msg_V_init, msg_W_init, DEBUG)
                 R_edges[k].update_marginal(R_est)
             ##################
 
@@ -234,7 +177,6 @@ def plot_x_and_r_em(X_vis_entry, X_true, R_est, R_true, step, save_path=None):
         mean = x['m'].flatten()
         # var = 50*np.sqrt(np.linalg.det(x['V']))  # EM working: 50
         var = np.sqrt(np.linalg.det(x['V']))  # EM failing: 1
-        # plt.scatter(mean[0], mean[1], color='red', label="Estimated X")
         handles, labels = plt.gca().get_legend_handles_labels()
         if label_for_x_mean not in labels:
             plt.scatter(mean[0], mean[1], color='red', label=label_for_x_mean)

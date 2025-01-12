@@ -25,7 +25,7 @@ max_in_iter = 100
 
 
 plot = True
-# plot = False
+DEBUG = True
 
 # Fix random seed
 np.random.seed(9)
@@ -36,13 +36,13 @@ X_true = generate_ground_truth(R_true, X_true_0, N)
 y_obs = generate_noisy_obs(X_true, C, sigma2_Z, N)
 
 print("Starting EM Algorithm")
-R_est_em, LL_series, _, theta_series_em, r_norm_series_em = expectation_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_true, X_true)
+R_est_em, LL_series, _, theta_series_em, r_norm_series_em = expectation_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_true, X_true, DEBUG)
+sqe_em = squared_error(R_est_em, R_true)
 
 print("Starting AM Algorithm")
-R_est_am, X_est_am , _, theta_series_am, r_norm_series_am = alternate_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_true, X_true)
-
-sqe_em = squared_error(R_est_em, R_true)
+R_est_am, X_est_am , _, theta_series_am, r_norm_series_am = alternate_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_true, X_true, DEBUG)
 sqe_am = squared_error(R_est_am, R_true)
+
 print(f"sigma2_Z = {sigma2_Z:.2e}, EM L2 error= {sqe_em:.2e}, AM L2 error= {sqe_am:.2e}")
 
 def plot_epoch_borders(max_out_iter, max_in_iter):

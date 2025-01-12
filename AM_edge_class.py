@@ -5,7 +5,7 @@ from util import *
 import matplotlib.pyplot as plt
 
 class X_k_edge_MBF:
-    def __init__(self, sigma2_Z, msg_V_init, msg_W_init):
+    def __init__(self, sigma2_Z, msg_V_init, msg_W_init, DEBUG=False):
         # Forward messages
         self.msgf_m_X_k_prime = np.array([[0], [0]])
         self.msgf_m = np.array([[0], [0]])
@@ -19,8 +19,6 @@ class X_k_edge_MBF:
 
         # Tilde
         self.xi_tilde = np.array([[0], [0]])
-        # self.W_tilde_prime = np.zeros((2, 2))
-        # self.W_tilde = np.zeros((2, 2))
         self.W_tilde_prime = msg_W_init
         self.W_tilde = msg_W_init
 
@@ -33,9 +31,8 @@ class X_k_edge_MBF:
         self.update_A_hat_r(R_init)
 
         self.sigma2_Z = sigma2_Z
+        self.DEBUG = DEBUG
 
-        # self.DEBUG = True
-        self.DEBUG = False
 
     def update_A_hat_r (self, r):
         self.A_hat_r = convert_vect_to_rotation_matrix(r)
@@ -44,7 +41,6 @@ class X_k_edge_MBF:
     def forward(self, X_k_minus_1, y_k, V_U):
         self.msgf_m_X_k_prime = self.A_hat_r @ X_k_minus_1.msgf_m                            # Eq. 3.209
         self.msgf_V_X_k_prime = symmetrize(self.A_hat_r @ X_k_minus_1.msgf_V @ self.A_hat_r.T + V_U)     # Eq. 3.210
-        # self.msgf_V_X_k_prime = self.A_hat_r @ X_k_minus_1.msgf_V @ self.A_hat_r.T + V_U     # Eq. 3.210
         G = np.linalg.inv(self.sigma2_Z + C @ self.msgf_V_X_k_prime @ C.T)
         self.G = G
         self.G_dd = C.T @ G @ C
@@ -52,41 +48,14 @@ class X_k_edge_MBF:
 
         self.msgf_m = self.msgf_m_X_k_prime + self.msgf_V_X_k_prime @ self.g_dd
         self.msgf_V = symmetrize(self.msgf_V_X_k_prime - self.msgf_V_X_k_prime @ self.G_dd @ self.msgf_V_X_k_prime)
-        # self.msgf_V = self.msgf_V_X_k_prime - self.msgf_V_X_k_prime @ self.G_dd @ self.msgf_V_X_k_prime
 
         assert(np.linalg.det(self.msgf_V_X_k_prime) >0), f"Negative deteriminant {np.linalg.det(self.msgf_m_X_k_prime):.2e}"
         assert(np.linalg.det(self.msgf_V) > 0), f"Negative deteriminant {np.linalg.det(self.msgf_V):.2e}"
-        # print(f"G: {G[0,0]}")
-        # print_vectors_side_by_side(self.msgf_m_X_k_prime, self.msgf_m, "m_X_k_prime", "msgf_m")
-        # print_matrices_side_by_side(self.msgf_V_X_k_prime, self.msgf_V, "msgf_V_X_k_prime", "msgf_V")
-        # print_matrix(X_k_minus_1.msgf_V, "X_k-1.msgf_V")
-        # print_matrix(self.A_hat_r, "Ar")
-        # assert_symmetric(self.A_hat_r @ X_k_minus_1.msgf_V @ self.A_hat_r.T, "first term")
-        """
-        assert_symmetric(X_k_minus_1.msgf_V, "X_k-1.msgf_V")
-        assert_symmetric(self.msgf_V_X_k_prime, "self.msgf_V_X_k_prime")
-        assert_symmetric(self.msgf_V, "self.msgf_V")
-        print_matrix(self.A_hat_r, "self.A_hat_r")
-        print_matrices_side_by_side(X_k_minus_1.msgf_V, self.msgf_V_X_k_prime, "X_k_minus_1.msgf_V", "self.msgf_V_X_k_prime")
-        # print_matrix(self.msgf_V_X_k_prime @ self.G_dd @ self.msgf_V_X_k_prime, "Kalman V drop")
-        print_matrix(self.msgf_V_X_k_prime @ self.G_dd @ self.msgf_V_X_k_prime, "second term")
-        print_matrix(self.msgf_V_X_k_prime, "self.msgf_V_X_k_prime")
-        print_matrix(self.msgf_V, "self.msgf_V")
-        """
-        # print_matrices_side_by_side(self.msgf_V_X_k_prime, self.msgf_V,"self.msgf_V_X_k_prime", "self.msgf_V")
-        # print_matrix(self.msgf_V, "msgf_V")
-        # print_vector(self.msgf_m, "msgf_m")
-        # print(f"det(self.msgf_V_X_k_prime): {np.linalg.det(self.msgf_V_X_k_prime)}")
-        # if (np.linalg.det(self.msgf_V_X_k_prime) <0):
-        #     print("ERROR: negative determinant")
-        # print(f"det(self.msgf_V): {np.linalg.det(self.msgf_V)}")
-        # if (np.linalg.det(self.msgf_V) <=0):
-        #     print("ERROR: negative determinant")
 
-            
-        # print_matrices_side_by_side(self.A_hat_r @ X_k_minus_1.msgf_V @ self.A_hat_r.T, "first term")
-        # print_ma
-        # print(f"self.G_dd(0,0): {self.G_dd[0,0]:.2e}")
+        if (self.DEBUG):
+            print_matrices_side_by_side(X_k_minus_1.msgf_V, self.msgf_V_X_k_prime, "X_k_minus_1.msgf_V", "self.msgf_V_X_k_prime")
+            # print_matrix(self.msgf_V_X_k_prime, "self.msgf_V_X_k_prime")
+            # print_matrix(self.msgf_V, "self.msgf_V")
 
         return
 
@@ -98,24 +67,8 @@ class X_k_edge_MBF:
 
         # Optional (for variance estimation) Eq. 3.219-3.220 in MESA script
         X_k_plus_1.W_tilde_prime = symmetrize(F_k_plus_1.T @ X_k_plus_1.W_tilde @ F_k_plus_1 + X_k_plus_1.G_dd)
-        # X_k_plus_1.W_tilde_prime = F_k_plus_1.T @ X_k_plus_1.W_tilde @ F_k_plus_1 + X_k_plus_1.G_dd
         self.W_tilde = symmetrize(self.A_hat_r.T @ X_k_plus_1.W_tilde_prime @ self.A_hat_r)
-        # self.W_tilde = self.A_hat_r.T @ X_k_plus_1.W_tilde_prime @ self.A_hat_r
 
-        """
-        print_matrix(X_k_plus_1.G, "X_k_plus_1.G")
-        print_matrices_side_by_side(X_k_plus_1.W_tilde_prime, self.W_tilde, "X_k_plus_1.W_tilde_prime", "     W_X_k_tilde")
-        print_matrix(X_k_plus_1.W_tilde, "X_k_plus_1.W_tilde")
-        print_matrix(F_k_plus_1, "F_k_plus_1")
-        print_vector(X_k_plus_1.xi_tilde, "X_k_plus_1.xi_tilde")
-        print_vector(xi_tilde_X_k_plus_1_prime, "xi_tilde_X_k_plus_1_prime")
-        print_vector(self.xi_tilde, "X_k.xi_tilde")
-        """
-        # assert(np.linalg.det(X_k_plus_1.W_tilde_prime) >0)
-        # assert(np.linalg.det(self.W_tilde) > 0), f"Negative determinant {np.linalg.det(self.W_tilde):.2e}"
-        # print_matrix(X_k_plus_1.W_tilde_prime, f"X_k_plus_1.W_tilde_prime (rank {np.linalg.matrix_rank(X_k_plus_1.W_tilde_prime)}, det = {np.linalg.det(X_k_plus_1.W_tilde_prime):.2e})")
-        # assert(np.linalg.matrix_rank(X_k_plus_1.W_tilde_prime) == 2), f"X_k_plus_1.W_tilde_prime (rank {np.linalg.matrix_rank(X_k_plus_1.W_tilde_prime)})"
-        # assert(np.linalg.matrix_rank(self.W_tilde) == 2), f"self.W_tilde (rank {np.linalg.matrix_rank(self.W_tilde)})"
         if (np.linalg.det(X_k_plus_1.W_tilde_prime) == 0):
             print_matrix(X_k_plus_1.W_tilde, "X_k_plus_1.W_tilde")
         if (np.linalg.det(self.W_tilde) == 0):
@@ -123,32 +76,22 @@ class X_k_edge_MBF:
 
         assert(np.linalg.det(X_k_plus_1.W_tilde_prime) > 0), f"X_k_plus_1.W_tilde_prime (det {np.linalg.det(X_k_plus_1.W_tilde_prime):2e})"
         assert(np.linalg.det(self.W_tilde) > 0), f"self.W_tilde (det {np.linalg.det(self.W_tilde):.2e})"
-    
-        # if self.DEBUG:
-            # print_matrix(X_k_plus_1.W_tilde_prime, f"X_k_plus_1.W_tilde_prime (rank {np.linalg.matrix_rank(X_k_plus_1.W_tilde_prime)})")
-            # print_matrix(X_k_plus_1.G_dd, "X_k_plus_1.G_dd")
-            # print_vector(X_k_plus_1.g_dd, "X_k_plus_1.g_dd")
-            # print_vector(xi_tilde_X_k_plus_1_prime, "xi_tilde_X_k_plus_1_prime")
+
+        if (self.DEBUG):
+            print_vector(self.xi_tilde, "X_k.xi_tilde")
+            print_matrix(X_k_plus_1.W_tilde_prime, f"X_k_plus_1.W_tilde_prime (rank {np.linalg.matrix_rank(X_k_plus_1.W_tilde_prime)})")
+            print_matrix(self.W_tilde, "self.W_tilde")
 
         return
 
     def marginal(self):
         self.m = self.msgf_m - self.msgf_V @ self.xi_tilde  # Eq. 3.223
-        # self.V = self.msgf_V - self.msgf_V @ self.A_hat_r.T @ self.W_tilde @ self.msgf_V # Eq. 3227
         self.V = self.msgf_V - self.msgf_V @ self.W_tilde @ self.msgf_V # Eq. 3227
-        # print_matrix(self.V, "X_k.V")
-        # print_matrix(self.W_tilde, "X_k.W_tilde")
+
         if self.DEBUG:
-            # print_vectors_side_by_side(self.msgf_m, self.xi_tilde, "X_k.msgf_m", "X_k.xi_tilde")
-            # print_vector(self.msgf_V @ self.xi_tilde, "sub vect")
-            # print_matrices_side_by_side( self.msgf_V, self.W_tilde, "X_k.msgf_V", "self.W_tilde")
-            # print_matrix( self.msgf_V @ self.W_tilde @ self.msgf_V, "self.msgf_V @ self.W_tilde @ self.msgf_V")
-            # print_vector(self.m, "self.m")
-            # print_matrix( self.V, "self.V")
-            pass
-        
-        ## Assertion
-        # assert np.all(np.diagonal(self.V) >= 0), f"Matrix diagonal contains negative values: {np.diagonal(self.V)}"
+            print_vector(self.m, "self.m")
+            print_matrix( self.V, "self.V")
+
         return self.m
 
     def get_estimate(self):
@@ -159,19 +102,16 @@ class X_k_edge_MBF:
         return LL_k[0,0]
 
 class R_k_edge:
-    def __init__(self, msg_V_init, msg_W_init):
+    def __init__(self, msg_V_init, msg_W_init, DEBUG=False):
         # Upwards message
-        self.msgb_W =msg_W_init.copy()
-        self.msgb_xi = np.array([[0], [0]])
-
         self.msgb_W_norm = 0
         self.msgb_xi_norm = np.array([[0], [0]])
 
         # Constants
         self.A_hat_x_k_minus_1 = np.eye(2)
-        self.x_k = X_init # Fixed value for X_k (since X_k = \hat{x}_k)
-        self.x_k_minus_1 = X_init # Fixed value for X_k (since X_k = \hat{x}_k)
-        self.DEBUG = False 
+        self.x_k = X_init
+        self.x_k_minus_1 = X_init
+        self.DEBUG = DEBUG
 
     def update_x_hat_and_A(self, x_k, x_k_minus_1):
         self.x_k = x_k
@@ -182,51 +122,14 @@ class R_k_edge:
     def backward(self, R_k_plus_1: 'R_k_edge', V_U):
         msgb_W_X0_k = np.linalg.inv(V_U)
 
-        # print(f"SHAPE BEFORE: {self.msgb_W.shape}, {self.msgb_xi.shape}, {self.msgb_W_prime.shape}, {self.msgb_xi_prime.shape}")
-        # Upwards message
-        # print(f"{self.A_hat_x_k_minus_1.T.shape}, {msgb_W_X0_k.shape}, {self.A_hat_x_k_minus_1.shape}")
-        self.msgb_W = self.A_hat_x_k_minus_1.T @ msgb_W_X0_k @ self.A_hat_x_k_minus_1
-        self.msgb_xi = self.A_hat_x_k_minus_1.T @ msgb_W_X0_k @self.x_k
-
         self.msgb_W_norm_coeff = convert_1x1_matrix_to_scalar(self.x_k_minus_1.T @ self.x_k_minus_1)
         self.msgb_xi_norm = self.A_hat_x_k_minus_1.T @ self.x_k
-        # left message (prime)
-        # self.msgb_W_prime = R_k_plus_1.msgb_W_prime + R_k_plus_1.msgb_W
-        # self.msgb_xi_prime = R_k_plus_1.msgb_xi_prime + R_k_plus_1.msgb_xi
-
-        # print(f"SHAPE AFTER: {self.msgb_W.shape}, {self.msgb_xi.shape}, {self.msgb_W_prime.shape}, {self.msgb_xi_prime.shape}")
         if (self.DEBUG):
-            print("------------")
             print(f"R_k.msgb_W_norm_coeff: {self.msgb_W_norm_coeff:.2f}")
-            # print(f" X_k_minus_1.m: ({self.A_hat_x_k_minus_1.T[0,0]:.2e}, {self.A_hat_x_k_minus_1.T[1,0]:.2e})")
-            print("------------")
-            # print(f"   X_k_minus_1.m.T @ X_k.m: {convert_1x1_matrix_to_scalar(X_k_minus_1.m.T @ X_k.m):.2e}")
-            # print(f"   X_k_minus_1.m.T @ P.T @ X_k.m: {convert_1x1_matrix_to_scalar( X_k_minus_1.m.T @ P.T @ X_k.m):.2e}")
             msgb_m = 1/self.msgb_W_norm_coeff * self.msgb_xi_norm
-            # print_vectors_side_by_side(self.msgb_xi_norm, msgb_m,  "msgb_xi_norm", "msgb_m")
-            # print(f"   X_k_minus_1.m.T @ X_k.m: {self.msgb_xi_norm[0,0]:.2e}")
-            # print(f"   X_k_minus_1.m.T @ P.T @ X_k.m: {self.msgb_xi_norm[1,0]:.2e}")
-            print(f"   (X_k_minus_1.m.T @ X_k.m, X_k_minus_1.m.T @ P.T @ X_k.m): ({self.msgb_xi_norm[0,0]:.2e},{self.msgb_xi_norm[1,0]:.2e})")
+            print_vectors_side_by_side(self.msgb_xi_norm, msgb_m,  "msgb_xi_norm", "msgb_m")
 
-        return self
-
-    # def forward(self, R_k_minus_1: 'R_k_edge'):
-    #     # print(f"My SHAPE: {R_k_minus_1.msgf_W_prime.shape}, {self.msgb_W.shape}")
-    #     self.msgf_W_prime = R_k_minus_1.msgf_W_prime + self.msgb_W
-    #     self.msgf_xi_prime = R_k_minus_1.msgf_xi_prime + self.msgb_xi
-
-    #     # print(f"My SHAPE: {self.msgf_W_prime.shape}, {self.msgf_xi_prime.shape}")
-    #     return self
-    # def marginal(self):
-    #     # print(f"SHAPE: {self.msgf_W_prime.shape}, {self.msgb_W_prime.shape}")
-    #     V_R_prime_k = np.linalg.inv(self.msgf_W_prime + self.msgb_W_prime)
-    #     m_R_prime_k = V_R_prime_k @ (self.msgf_xi_prime + self.msgb_xi_prime)
-    #     # print(f"SHAPE: {V_R_prime_k.shape}, {self.msgf_xi_prime.shape}, {self.msgb_xi_prime.shape}")
-
-    #     self.m = m_R_prime_k
-    #     self.V = V_R_prime_k
-
-    #     return m_R_prime_k, V_R_prime_k
+        return
 
     def marginal_estimate(self):
         return self.m
@@ -247,7 +150,7 @@ def collect_R_est (R_edges, N):
 
 def estimate_X(R_est, X_edges, y, V_U, N, sigma2_Z, msg_V_init, msg_W_init, DEBUG):
     for k in range(0, N+1):
-        X_edges[k].__init__(sigma2_Z, msg_V_init, msg_W_init)
+        X_edges[k].__init__(sigma2_Z, msg_V_init, msg_W_init, DEBUG)
 
     for k in range(0, N+1): # k = 0, ..., N
         X_edges[k].update_A_hat_r(R_est)
@@ -259,7 +162,7 @@ def estimate_X(R_est, X_edges, y, V_U, N, sigma2_Z, msg_V_init, msg_W_init, DEBU
 
     # for k in range(N-1, -1, -1):
     # Computation for X[k] is done at X[k-1]
-    # Backward pass X[N-1], X[N-2], ..., X[0]. 
+    # Backward pass X[N-1], X[N-2], ..., X[0].
     # Effectively computation for X[N], ..., X[1]
     for k in range(N-1, -1, -1): # k = N-1, N-2, ..., 0
         if (DEBUG):
@@ -276,38 +179,35 @@ def estimate_X(R_est, X_edges, y, V_U, N, sigma2_Z, msg_V_init, msg_W_init, DEBU
 
     return X_est
 
-def estimate_R(X_est, R_edges, V_U, N, msg_V_init, msg_W_init):
+def estimate_R(X_est, R_edges, V_U, N, msg_V_init, msg_W_init, DEBUG):
     for k in range(0, N+1):
-        R_edges[k].__init__(msg_V_init, msg_W_init)
+        R_edges[k].__init__(msg_V_init, msg_W_init, DEBUG)
 
     for k in range(1, N+1):
         R_edges[k].update_x_hat_and_A(X_est[k], X_est[k-1])
 
     ### Part 2: fix X, estimate R
     # print(f"Step 2: Assume fixed X, estimate R.")
-    # print(len(R_edges))
+    # Backward R[N], ..., R[1]
     for k in range(N, 0, -1):
-        # print(f"Backward pass on R_{k}")
-        # Backward R[N], ..., R[1]
+        if (DEBUG):
+            print(f"Backward pass on R_{k}")
         R_edges[k].backward(R_edges[k], V_U)
 
-    ## Estimate R based on backward message on R_0
-    # R_est_new = np.linalg.inv(R_edges[0].msgb_W_prime) @ R_edges[0].msgb_xi_prime
-    # Estimate R 
+    # Estimate R
     ##################
     R_est_new = collect_R_est(R_edges, N)
     ##################
     return R_est_new
 
-def alternate_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_true, X_true):
+def alternate_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_true, X_true, DEBUG=False):
     ## Params
     msg_V_init,msg_W_init,V_U_coeff = setup_params(sigma2_Z)
     ####
 
-    X_edges = [X_k_edge_MBF(sigma2_Z, msg_V_init, msg_W_init) for _ in range(N+1)]
-    R_edges = [R_k_edge(msg_V_init, msg_W_init) for _ in range(N+1)]
+    X_edges = [X_k_edge_MBF(sigma2_Z, msg_V_init, msg_W_init, DEBUG) for _ in range(N+1)]
+    R_edges = [R_k_edge(msg_V_init, msg_W_init, DEBUG) for _ in range(N+1)]
 
-    DEBUG = False 
     R_est = R_init
     theta_series = []
     r_norm_series = []
@@ -334,22 +234,21 @@ def alternate_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_true
             X_est_vis.append({"step": "1_X_estimation", "out_iter": out_iter, "in_iter": in_iter, "X_vis": X_vis, "R_est": R_est.copy()})
 
             ## Step 2: Estimate R while keeping X fixed
-            R_est = estimate_R(X_est, R_edges, V_U, N, msg_V_init, msg_W_init)
+            R_est = estimate_R(X_est, R_edges, V_U, N, msg_V_init, msg_W_init, DEBUG)
 
-            # Print out R estimate
-            # print_vectors_side_by_side(R_est, R_true, ">R_est", "R_true")
-
-            # Additional logs
+            ## Metrics
+            sqe = squared_error(R_est, R_true)
             theta_hat = vector_angle(R_est)
             theta_series = theta_series + [theta_hat]
             r_norm_series = r_norm_series + [np.linalg.norm(R_est)]
 
+            # Print out R estimate
+            if (DEBUG):
+                print_vectors_side_by_side(R_est, R_true, f"sqe: {sqe:.2e} >R_est", "R_true")
+
             # Visualize R estimation
             X_est_vis.append({"step": "2_R_estimation", "out_iter": out_iter, "in_iter": in_iter, "X_vis": X_vis, "R_est": R_est.copy()})
 
-            ## Calculate Squared Error
-            sqe = squared_error(R_est, R_true)
-            # print(f"sqe: {sqe:.2e}")
 
 
 
@@ -429,64 +328,3 @@ def plot_x_and_r_am(X_vis_entry, X_true, R_est, R_true, step, save_path=None):
 
     return
 
-# def alternate_maximization_log(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_true, X_true):
-#     """
-#     Perform alternate maximization and return intermediate estimations, emphasizing each half algorithm.
-
-#     Parameters:
-#         sigma2_Z (float): Noise variance.
-#         N (int): Number of iterations.
-#         y_obs (list): Observed data.
-#         max_in_iter (int): Maximum number of passes per iteration.
-#         R_true (np.ndarray): Ground truth rotation vector.
-#         X_true (list): Ground truth X values.
-
-#     Returns:
-#         R_est (np.ndarray): Final estimated rotation vector.
-#         X_est (list): Final estimates for X.
-#         X_est_vis (list): List of intermediate visualization data for X and R at each iteration.
-#     """
-#     infty = sigma2_Z * 1e9
-#     eps = sigma2_Z * 1e-3
-#     msg_V_init = infty * np.eye(2)
-#     msg_W_init = eps * np.eye(2)
-#     V_U_coeff = sigma2_Z * 1e3
-
-#     R_est = R_init
-#     X_edges = [X_k_edge_MBF(sigma2_Z, msg_V_init, msg_W_init) for _ in range(N + 1)]
-#     R_edges = [R_k_edge(msg_V_init, msg_W_init) for _ in range(N + 1)]
-
-#     X_est_vis = []
-
-#     # Add initial state before the loop
-#     # X_vis = [{"m": X_init , "V": msg_V_init} for x in X_edges[1:]]
-#     # X_est_vis.append({"step": "initial", "out_iter": 0, "iteration": 0, "X_vis": X_vis, "R_est": R_est.copy()})
-    
-
-#     DEBUG = True 
-#     for iter_idx in range(max_out_iter):
-#         print(f"V_U Iteration {iter_idx+ 1}/{max_out_iter}")
-#         # print("Hello world")
-#         for iteration in range(max_in_iter):
-#             print(f"Iteration {iteration + 1}/{max_in_iter}")
-
-#             # Update V_U dynamically
-#             V_U = V_U_coeff * np.eye(2)
-
-#             # Step 1: Estimate X while keeping R fixed
-#             X_est = estimate_X(R_est, X_edges, y_obs, V_U, N, sigma2_Z, msg_V_init, msg_W_init, DEBUG)
-
-#             # Visualize X estimation
-#             X_vis = [{"m": x.marginal(), "V": x.V} for x in X_edges[1:]]
-#             X_est_vis.append({"step": "1_X_estimation", "out_iter": iter_idx, "iteration": iteration, "X_vis": X_vis, "R_est": R_est.copy()})
-
-#             # Step 2: Estimate R while keeping X fixed
-#             R_est = estimate_R(X_est, R_edges, V_U, N, msg_V_init, msg_W_init)
-#             print_vector(R_est, f"R_est at iteration: {iteration + 1}/{max_in_iter}")
-
-#             # Visualize R estimation
-#             X_est_vis.append({"step": "2_R_estimation", "out_iter": iter_idx, "iteration": iteration, "X_vis": X_vis, "R_est": R_est.copy()})
-
-#         V_U_coeff = (V_U_coeff * 0.5)
-
-#     return R_est, X_est, X_est_vis

@@ -21,7 +21,6 @@ def setup_params(sigma2_Z):
     # V_U_coeff = sigma2_Z*1e2
 
     infty = min(sigma2_Z*1e7, 1e7)
-    # eps   = min(sigma2_Z*1e2, 1e-6)
     eps   = min(sigma2_Z*1e-6, 1e-6)
     V_U_coeff = sigma2_Z*1e3
 
@@ -95,9 +94,6 @@ def squared_error (R, R_true):
 def print_vector(vector, label):
     print(f"{label}: ({vector[0, 0]:.2e}, {vector[1, 0]:.2e})")
     return
-# def print_vectors_side_by_side(vector1, vector2, label1="Vector 1", label2="Vector 2"):
-#     print(f"{label1}:({vector1[0, 0]:.2e}, {vector1[1, 0]:.2e});  {label2}:({vector2[0, 0]:.2e}, {vector2[1, 0]:.2e})")
-#     return
 def print_vectors_side_by_side(vector1, vector2, label1="Vector 1", label2="Vector 2", precision=2):
     """
     Prints two vectors side by side with specified labels and precision in scientific notation.
