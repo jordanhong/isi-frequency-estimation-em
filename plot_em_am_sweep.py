@@ -6,7 +6,7 @@ N = 20
 max_out_iter, max_in_iter = 50, 100
 
 # Load the saved data
-with open(f"sqe_data_N_{N}_max_out_iter_{max_out_iter}_max_in_iter_{max_in_iter}.json", 'r') as file:
+with open(f"data/sqe_data_N_{N}_max_out_iter_{max_out_iter}_max_in_iter_{max_in_iter}.json", 'r') as file:
     data = json.load(file)
 
 # Extract the stored SQE values
