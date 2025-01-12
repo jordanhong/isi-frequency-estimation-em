@@ -32,10 +32,10 @@ N = 20
 # Number of outer iterations (decreases sigma2_U)
 max_out_iter = 3
 # Number of inner iterations (iterative algorithm) (iterative algorithm) (iterative algorithm)
-max_in_iter = 100
+max_in_iter = 50
 
 # Observation noise values
-sigma2_Z = 2.15e-3
+sigma2_Z = 2e-4
 
 # plot=True generates plots for log-likelihood, theta, and norm{r}
 plot = True
