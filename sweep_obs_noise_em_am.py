@@ -7,6 +7,12 @@ from EM_edge_class import expectation_maximization
 from AM_edge_class import alternate_maximization
 from params import *
 
+"""
+This program sweeps the parameter observation noise sigma2_Z.
+For each fixed sigma2_Z, we generate 10 sets of observation realization y_obs.
+The same observation vector is then fed into the EM and AM algorithm.
+The resulting squared error for each trial is stored in all_sqe_em, all_sqe_am and written to a file DATA_PATH.
+"""
 ### Parameters
 ####################
 # Ground truth R= [cos(theta), sin(theta)]

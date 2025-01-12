@@ -5,6 +5,15 @@ from AM_edge_class import R_k_edge
 from params import *
 from util import *
 
+"""
+Tester code to test the AM algorithm. Each of the half-algorithm (estimate_X and estimate_R) is indivisually tested.
+In particular, I find this test especially useful for testing initial conditions of the messages for floating precisions.
+
+In util.py, the function setup_params is used for all message initializations.
+Feel free to change the scaling factors there, then run this script.
+If something is wrong, it will most likely be reflected in either 1) estimation value check (not good enough), or 2) assertion failure that checks the positive-definite of the matrices.
+"""
+
 # tolerance
 TOL = 1e-3
 

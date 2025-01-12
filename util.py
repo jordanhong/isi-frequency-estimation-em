@@ -5,6 +5,11 @@ import matplotlib.pyplot as plt
 
 ## Parameter setup
 def setup_params(sigma2_Z):
+    """
+    This function controls the initialization of variance matrix and state noise variance.
+    When you change this function, best to run test_alternate_max to ensure you didn't break any floating point precisions or estimation precisions.
+    When you see a decreasing log-likelihood for EM, you should try increasing V_U_coeff. But be careful! As this often breaks other things, so you might need to adjusy infty and eps as well.
+    """
     ### Config 1 (passes test_alternate_max)
     # infty = sigma2_Z*1e8
     # eps   = sigma2_Z*1e3
@@ -28,6 +33,7 @@ def setup_params(sigma2_Z):
     msg_W_init = eps*np.eye(2)
 
     return msg_V_init,msg_W_init,V_U_coeff
+
 ## Data generation and curation
 def generate_ground_truth(R_true, X_true_0, N):
     X_true = [X_true_0] + [X_init for _ in range(N)]
@@ -76,6 +82,14 @@ def plot_x_and_r_true(X_true, R_true, save_path=None):
     else:
         plt.show()
 
+    return
+
+def plot_epoch_borders(max_out_iter, max_in_iter):
+    """
+    Puts a vertical black bar at the end one outer loop iteration (when V_U changes)
+    """
+    for out_iter in range (1, max_out_iter,1):
+        plt.axvline(x=out_iter*max_in_iter, color='black', linestyle='--', linewidth=1 )
     return
 
 ## Miscellany

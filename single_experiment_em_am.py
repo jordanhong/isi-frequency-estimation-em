@@ -8,6 +8,11 @@ from AM_edge_class import alternate_maximization
 from params import *
 import random
 
+"""
+Runs a single experiment for both the EM algorithm and AM algorithm.
+If plot is set to true, the script also creates a plot comparing log-likelihood, theta, and norm(r).
+"""
+
 ### Plot settings
 ####################
 plt.rc('text', usetex=True)
@@ -60,12 +65,6 @@ sqe_am = squared_error(R_est_am, R_true)
 ## Final squared error
 print(f"sigma2_Z = {sigma2_Z:.2e}, EM L2 error= {sqe_em:.2e}, AM L2 error= {sqe_am:.2e}")
 
-def plot_epoch_borders(max_out_iter, max_in_iter):
-    # Plots a vertical black bar at the end one outer loop iteration (when V_U changes)
-    for out_iter in range (1, max_out_iter,1):
-        plt.axvline(x=out_iter*max_in_iter, color='black', linestyle='--', linewidth=1 )
-    return
-
 if plot:
     # Plot LL_series
     plt.figure()
@@ -75,7 +74,7 @@ if plot:
     plot_epoch_borders(max_out_iter, max_in_iter)
     plt.grid(True, which="both", linestyle="--")
     plt.legend()
-    plt.savefig(f"plot/LL_series_N{N}_max_out_iter_{max_out_iter}_max_in_iter_{max_in_iter}.pdf", bbox_inches='tight')
+    plt.savefig(f"plot/single/LL_series_N{N}_max_out_iter_{max_out_iter}_max_in_iter_{max_in_iter}.pdf", bbox_inches='tight')
     # plt.show()
 
     # Plot theta_series
@@ -88,7 +87,7 @@ if plot:
     plt.xlabel('Epoch')
     plt.grid(True, which="both", linestyle="--")
     plt.legend()
-    plt.savefig(f"plot/theta_series_N{N}_max_out_iter_{max_out_iter}_max_in_iter_{max_in_iter}.pdf", bbox_inches='tight')
+    plt.savefig(f"plot/single/theta_series_N{N}_max_out_iter_{max_out_iter}_max_in_iter_{max_in_iter}.pdf", bbox_inches='tight')
     # plt.show()
 
     # Plot theta_series
@@ -101,5 +100,5 @@ if plot:
     plt.xlabel('Epoch')
     plt.grid(True, which="both", linestyle="--")
     plt.legend()
-    plt.savefig(f"plot/r_norm_series_{N}_max_out_iter_{max_out_iter}_max_in_iter_{max_in_iter}.pdf", bbox_inches='tight')
+    plt.savefig(f"plot/single/r_norm_series_{N}_max_out_iter_{max_out_iter}_max_in_iter_{max_in_iter}.pdf", bbox_inches='tight')
     # plt.show()

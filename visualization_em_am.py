@@ -1,14 +1,16 @@
 import numpy as np
-# import cupy as np
 import matplotlib.pyplot as plt
-from AM_edge_class import X_k_edge_MBF, estimate_X
 from AM_edge_class import alternate_maximization, plot_x_and_r_am
-from EM_edge_class import R_k_edge_EM
 from EM_edge_class import expectation_maximization, plot_x_and_r_em
 from util import *
 from params import *
 import random
 
+"""
+This program consists of two (short) experiments. The "snapshots" of each half-algorithms are plotted.
+Experiment 1: Case when both EM and AM are working.
+Experiment 2: Case when AM works but EM fails.
+"""
 
 ############################################
 ## Plot settings
@@ -44,22 +46,22 @@ np.random.seed(8)
 ############################################
 
 ############################################
-## Ground truth
+# ## Ground truth
 theta = np.pi/4
 # theta = np.pi/8
 R_true = np.array([[np.cos(theta)], [np.sin(theta)]])
 X_true = generate_ground_truth(R_true, X_true_0, N)
-plot_x_and_r_true(
-    X_true=X_true,
-    R_true=R_true,
-    save_path= f"plot/frequency_estimation_ground_truth.png"
-)
+# plot_x_and_r_true(
+#     X_true=X_true,
+#     R_true=R_true,
+#     save_path= f"plot/frequency_estimation_ground_truth.png"
+# )
 ############################################
 
 
 ############################################
 # Experiment 1: both EM and AM working
-sigma2_Z = 1e-3
+sigma2_Z = 1e-4
 max_out_iter, max_in_iter = 5, 5
 
 # Generate noisy observation
@@ -109,7 +111,7 @@ for entry in X_est_vis:
 sigma2_Z = 1e-1
 max_out_iter, max_in_iter = 3, 50
 plot = True
-plot_steps = False
+plot_steps = True
 
 # Generate noisy observation
 y_obs = generate_noisy_obs(X_true, C, sigma2_Z, N)

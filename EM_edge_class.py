@@ -4,8 +4,12 @@ from params import *
 from util import *
 import matplotlib.pyplot as plt
 
+# Permutation matrix
 P = np.array([[0, -1], [1, 0]])
 class R_k_edge_EM:
+    """
+    Calculates EM message for the k'th R branch.
+    """
     def __init__(self, msg_V_init, msg_W_init, DEBUG=False):
         # Normalized upwards message
         self.msgb_W_norm_coeff = 0
@@ -31,7 +35,7 @@ class R_k_edge_EM:
         msgb_V_X_k_prime = np.linalg.inv(X_k.W_tilde_prime) - X_k.msgf_V_X_k_prime # msgb_V_X_k_prime = (W_tilde_prime^-1 - msgf_V_X_k_prime)
         V_X_k_minus_1_X_k_prime_T = X_k_minus_1.msgf_V @ A_r.T @ X_k.W_tilde_prime @ msgb_V_X_k_prime
         Exp_X_k_minus_1_T_X_k_prime = np.trace(V_X_k_minus_1_X_k_prime_T) + X_k_minus_1.m.T @ X_k.m
-        Exp_X_k_minus_1_T_P_T_X_k_prime = np.trace(V_X_k_minus_1_X_k_prime_T @ P) + X_k_minus_1.m.T @ P.T @ X_k.m
+        Exp_X_k_minus_1_T_P_T_X_k_prime = np.trace(P @ V_X_k_minus_1_X_k_prime_T) + X_k_minus_1.m.T @ P.T @ X_k.m
         self.msgb_xi_norm = np.vstack((Exp_X_k_minus_1_T_X_k_prime, Exp_X_k_minus_1_T_P_T_X_k_prime))
 
         if (self.DEBUG):
@@ -55,21 +59,23 @@ def expectation_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_tr
     # eps   = sigma2_Z*1e-2
     # eps   = sigma2_Z*1e-3
     # # msg_W_init = np.zeros((2,2))
-    # V_U_coeff = sigma2_Z*1e3 # Need atleast +2 to have non-decreasing LL (for 1.29e-2)
     # V_U_coeff = sigma2_Z*1e2 # Need atleast +2 to have non-decreasing LL (for 1.29e-2)
-    # # V_U_coeff = sigma2_Z*1e-6 # For 7.74e0-2, this gives better result but doesn't have good LL
+    # V_U_coeff = sigma2_Z*1e-6 # For 7.74e0-2, this gives better result but doesn't have good LL
     ####
 
 
-    X_est_vis = []
 
     X_edges = [X_k_edge_MBF(sigma2_Z,msg_V_init, msg_W_init, DEBUG) for k in range(N + 1)]
     R_edges = [R_k_edge_EM(msg_V_init, msg_W_init, DEBUG) for k in range(N+1)]
+    # Instantiate N+1 R edges to maintain consistent index k. We use only k=1 to k=N.
 
     R_est = R_init
-    LL_series = []
-    theta_series = []
-    r_norm_series = []
+    # List of estimates for every inner loop iteration.
+    LL_series = []      # log-likelihood
+    theta_series = []   # arg(r)
+    r_norm_series = []  # norm(r)
+    # List to store estimate (X, R) with iteration index.
+    X_est_vis = []
 
     for out_iter in range (max_out_iter):
         print(f"Outer iteration {out_iter + 1}/{max_out_iter}")
@@ -92,7 +98,7 @@ def expectation_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_tr
             X_est_vis.append({"step": "1_X_expectation", "out_iter": out_iter, "in_iter": in_iter, "X_vis": X_vis, "R_est": R_est.copy()})
             ##################
 
-            # Calculate LL
+            # Calculate Log-likelihood
             ##################
             LL = 0
             for k in range(1, N+1):
@@ -118,9 +124,8 @@ def expectation_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_tr
             # so there can only be (N) upwards estimation (R_1 to R_N)
             for k in range(N, 0, -1):
                 # Backward R[N], ..., R[1]
-                # print("===================================")
-                # print("")
-                # print(f"Backward pass on R_{k}")
+                if (DEBUG):
+                    print(f"Backward pass on R_{k}")
                 R_edges[k].backward(X_edges[k-1], X_edges[k], V_U_coeff)
             ##################
 
@@ -151,10 +156,10 @@ def plot_x_and_r_em(X_vis_entry, X_true, R_est, R_true, step, save_path=None):
     Plot the mean and variance of X along with the estimated and true rotation vectors.
 
     Parameters:
-        X_vis_entry (list): A list of dictionaries with keys 'm' (mean) and 'V' (variance) for each X.
-        R_est (np.ndarray): Estimated rotation vector.
-        R_true (np.ndarray): True rotation vector.
-        save_path (str, optional): Path to save the plot. If None, the plot is displayed.
+        X_vis_entry: A list of dictionaries with keys 'm' (mean) and 'V' (variance) for each X.
+        R_est: Estimated rotation vector.
+        R_true: True rotation vector.
+        step: which step in the algorithm?
     """
     plt.figure(figsize=(8, 8))
 

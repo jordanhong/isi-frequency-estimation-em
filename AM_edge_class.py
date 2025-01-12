@@ -1,10 +1,17 @@
 import numpy as np
-# import cupy as np
 from params import *
 from util import *
 import matplotlib.pyplot as plt
 
 class X_k_edge_MBF:
+    """ 
+    Implements the MBF algorithm c.f. MESA 2024 script Table 3.7 on page 77.
+    Each instance represents a state, i.e. X_k.
+    Parameters:
+    sigma2_Z: observation noise
+    msg_V_init: initial conditions for variance matrix messages
+    msg_W_init: initial conditions for precision matrix messages
+    """
     def __init__(self, sigma2_Z, msg_V_init, msg_W_init, DEBUG=False):
         # Forward messages
         self.msgf_m_X_k_prime = np.array([[0], [0]])
@@ -32,7 +39,6 @@ class X_k_edge_MBF:
 
         self.sigma2_Z = sigma2_Z
         self.DEBUG = DEBUG
-
 
     def update_A_hat_r (self, r):
         self.A_hat_r = convert_vect_to_rotation_matrix(r)
@@ -102,6 +108,9 @@ class X_k_edge_MBF:
         return LL_k[0,0]
 
 class R_k_edge:
+    """
+    Implements AM message calculation for fixed X_k. We follow the closed-form AM message and calculate in backward().
+    """
     def __init__(self, msg_V_init, msg_W_init, DEBUG=False):
         # Upwards message
         self.msgb_W_norm = 0
@@ -119,9 +128,11 @@ class R_k_edge:
         self.A_hat_x_k_minus_1 = convert_vect_to_rotation_matrix(x_k_minus_1)
         return
 
-    def backward(self, R_k_plus_1: 'R_k_edge', V_U):
-        msgb_W_X0_k = np.linalg.inv(V_U)
-
+    def backward(self):
+        """
+        Calculates the AM message for one branch R_k.
+        Note we calculate the normalized (without the multiplier V_U^-1) since the message doesn't depend on such. 
+        """
         self.msgb_W_norm_coeff = convert_1x1_matrix_to_scalar(self.x_k_minus_1.T @ self.x_k_minus_1)
         self.msgb_xi_norm = self.A_hat_x_k_minus_1.T @ self.x_k
         if (self.DEBUG):
@@ -139,6 +150,9 @@ class R_k_edge:
         return
 
 def collect_R_est (R_edges, N):
+    """
+    Collects all upwards AM messages on branch R_k and calculate the posterior estimate.
+    """
     msgb_R_xi_norm = np.array([[0], [0]])
     msgb_R_W_norm_coeff = 0
     for k in range(1, N+1):
@@ -149,6 +163,9 @@ def collect_R_est (R_edges, N):
     return R_est_new
 
 def estimate_X(R_est, X_edges, y, V_U, N, sigma2_Z, msg_V_init, msg_W_init, DEBUG):
+    """
+    First half of the AM algorithm: fix R, estimate X.
+    """
     for k in range(0, N+1):
         X_edges[k].__init__(sigma2_Z, msg_V_init, msg_W_init, DEBUG)
 
@@ -180,6 +197,9 @@ def estimate_X(R_est, X_edges, y, V_U, N, sigma2_Z, msg_V_init, msg_W_init, DEBU
     return X_est
 
 def estimate_R(X_est, R_edges, V_U, N, msg_V_init, msg_W_init, DEBUG):
+    """ 
+    Second half of the AM algorithm: fix X, estimate R.
+    """
     for k in range(0, N+1):
         R_edges[k].__init__(msg_V_init, msg_W_init, DEBUG)
 
@@ -187,12 +207,11 @@ def estimate_R(X_est, R_edges, V_U, N, msg_V_init, msg_W_init, DEBUG):
         R_edges[k].update_x_hat_and_A(X_est[k], X_est[k-1])
 
     ### Part 2: fix X, estimate R
-    # print(f"Step 2: Assume fixed X, estimate R.")
     # Backward R[N], ..., R[1]
     for k in range(N, 0, -1):
         if (DEBUG):
             print(f"Backward pass on R_{k}")
-        R_edges[k].backward(R_edges[k], V_U)
+        R_edges[k].backward()
 
     # Estimate R
     ##################
@@ -201,17 +220,23 @@ def estimate_R(X_est, R_edges, V_U, N, msg_V_init, msg_W_init, DEBUG):
     return R_est_new
 
 def alternate_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_true, X_true, DEBUG=False):
-    ## Params
+    """
+    Entry function that performs alternating maximization.
+    """
+    ## Setup up message initial conditions according to sigma2_Z. 
+    ## Note, this affects a lot of things.
     msg_V_init,msg_W_init,V_U_coeff = setup_params(sigma2_Z)
-    ####
 
     X_edges = [X_k_edge_MBF(sigma2_Z, msg_V_init, msg_W_init, DEBUG) for _ in range(N+1)]
     R_edges = [R_k_edge(msg_V_init, msg_W_init, DEBUG) for _ in range(N+1)]
+    # Instantiate N+1 R edges to maintain consistent index k. We use only k=1 to k=N.
 
     R_est = R_init
-    theta_series = []
-    r_norm_series = []
-    X_est_vis = []
+    # List of estimates for every inner loop iteration.
+    theta_series = []   # arg(r)
+    r_norm_series = []  # norm(r)
+    # List to store estimate (X, R) with iteration index.
+    X_est_vis = []  
 
     for out_iter in range (max_out_iter):
         print(f"Outer iteration {out_iter + 1}/{max_out_iter}")
@@ -264,10 +289,10 @@ def plot_x_and_r_am(X_vis_entry, X_true, R_est, R_true, step, save_path=None):
     Plot the mean and variance of X along with the estimated and true rotation vectors.
 
     Parameters:
-        X_vis_entry (list): A list of dictionaries with keys 'm' (mean) and 'V' (variance) for each X.
-        R_est (np.ndarray): Estimated rotation vector.
-        R_true (np.ndarray): True rotation vector.
-        save_path (str, optional): Path to save the plot. If None, the plot is displayed.
+        X_vis_entry: A list of dictionaries with keys 'm' (mean) and 'V' (variance) for each X.
+        R_est: Estimated rotation vector.
+        R_true: True rotation vector.
+        step: which step in the algorithm?
     """
     plt.figure(figsize=(8, 8))
 
@@ -281,18 +306,15 @@ def plot_x_and_r_am(X_vis_entry, X_true, R_est, R_true, step, save_path=None):
     # Plot the true rotation vector
     plt.quiver(0, 0, R_true[0, 0], R_true[1, 0], angles='xy', scale_units='xy', scale=1, color='purple', label="True R")
 
-    X_true_np = np.array(X_true)  # Assuming X_true is a list of dictionaries with 'm'
+    X_true_np = np.array(X_true)
     plt.scatter(X_true_np[:, 0], X_true_np[:, 1], color='black', alpha=0.7, label="True X")
 
     # Plot X means and variances
     label_for_x_mean = "Estimated X"
     for x in X_vis_entry:
         mean = x['m'].flatten()
-        # var = 0.2* np.sqrt(np.linalg.det(x['V']))  # control: 0.2
-        var = np.sqrt(np.linalg.det(x['V']))  # working: 1
-        # print(mean)
-        # print(f"{var:.2e}")
-        # plt.scatter(mean[0], mean[1], color='red', label="Estimated X")
+        # var = 0.2* np.sqrt(np.linalg.det(x['V']))  # can adjust scaling factor for visualization
+        var = np.sqrt(np.linalg.det(x['V']))
         handles, labels = plt.gca().get_legend_handles_labels()
         if label_for_x_mean not in labels:
             plt.scatter(mean[0], mean[1], color='red', label=label_for_x_mean)
@@ -303,7 +325,6 @@ def plot_x_and_r_am(X_vis_entry, X_true, R_est, R_true, step, save_path=None):
             variance_circle = plt.Circle((mean[0], mean[1]), var, color='red', fill=False, linestyle='--', alpha=0.5)
             plt.gca().add_artist(variance_circle)
 
-    # Configure the plot
     plt.axhline(0, color='k', linestyle='--', linewidth=0.5)
     plt.axvline(0, color='k', linestyle='--', linewidth=0.5)
     plt.xlabel("X-axis")

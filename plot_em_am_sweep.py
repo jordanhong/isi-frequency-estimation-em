@@ -15,7 +15,7 @@ max_in_iter = 100
 DATA_PATH = f"data/sqe_data_N_{N}_max_out_iter_{max_out_iter}_max_in_iter_{max_in_iter}.json"
 
 # PATH for output figure
-FIGURE_PATH = f"scatter_em_am_sweep_N_{N}_max_out_iter_{max_out_iter}_max_in_iter_{max_in_iter}.pdf"
+FIGURE_PATH = f"plot/sweep/scatter_em_am_sweep_N_{N}_max_out_iter_{max_out_iter}_max_in_iter_{max_in_iter}.pdf"
 ####################
 
 ### Plot settings
