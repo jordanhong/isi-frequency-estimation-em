@@ -24,7 +24,7 @@ Individual experiments can be run through the following make targets.  Alternati
   - Log-likelihood
   - Estimated r angle (theta)
   - Estimated r norm
-  The output directory is `plot/single`.
+  The output directory is `plot/single`. The vertical bars in the plots denote end of one outer loop.
 
 - **`visual`**: Executes two small experiments to generate snapshot visualizations of EM and AM. The output directories are `plot/exp1/` (case when both EM and AM works) and `plot/exp2/` (case when AM works but EM fails).
 
