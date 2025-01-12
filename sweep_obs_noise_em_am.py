@@ -7,26 +7,37 @@ from EM_edge_class import expectation_maximization
 from AM_edge_class import alternate_maximization
 from params import *
 
-### Param
+### Parameters
 ####################
+# Ground truth R= [cos(theta), sin(theta)]
 theta = np.pi/8
 # Starting position
-# X_true_0 = np.array([[1], [0]])
 X_true_0 = np.array([[1/np.sqrt(2)], [1/np.sqrt(2)]])
+# X_true_0 = np.array([[1], [0]])
 
-N = 20
-max_out_iter, max_in_iter = 50, 100
-# max_out_iter, max_in_iter = 5, 100
+# Number of time steps
+N = 20 
+# Number of outer iterations (decreases sigma2_U)
+max_out_iter = 50
+# Number of inner iterations (iterative algorithm) (iterative algorithm) (iterative algorithm) 
+max_in_iter = 100
 
-np.random.seed(7)
-
-num_trials = 10
-####################
-
-
+# Observation noise values
 sigma2_Z_values = np.logspace(-5, 2, num=10)
 # sigma2_Z_values = [1e-5]
 # sigma2_Z_values = [7.74e-02]
+
+# Number of trials per sigma2_Z
+num_trials = 10
+# DEBUG mode prints out the Gaussian messages
+DEBUG = False
+
+# Fix random seed 
+np.random.seed(7)
+
+# Path to store experiment results
+DATA_PATH = f"data/sqe_data_N_{N}_max_out_iter_{max_out_iter}_max_in_iter_{max_in_iter}.json"
+####################
 
 # Initialize storage for all SQE values
 all_sqe_em = {}  # Dictionary to store lists of SQE for each sigma2_Z
@@ -77,7 +88,7 @@ for sigma2_Z in sigma2_Z_values:
     mean_sqe_values_am.append(mean_sqe_am)
     print(f"sigma2_Z = {sigma2_Z:.2e}, EM L2 error= {mean_sqe_em:.2e}, AM L2 error= {mean_sqe_am:.2e}")
 
-with open(f"data/sqe_data_N_{N}_max_out_iter_{max_out_iter}_max_in_iter_{max_in_iter}.json", 'w') as file:
+with open(DATA_PATH, 'w') as file:
     json.dump({'all_sqe_em': all_sqe_em, 'all_sqe_am': all_sqe_am}, file)
 
 print(f"Data saved to data/sqe_data_N_{N}_max_out_iter_{max_out_iter}_max_in_iter_{max_in_iter}.json")

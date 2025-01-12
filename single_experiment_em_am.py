@@ -8,46 +8,62 @@ from AM_edge_class import alternate_maximization
 from params import *
 import random
 
+### Plot settings
+####################
 plt.rc('text', usetex=True)
 plt.rc('text.latex', preamble=r'\usepackage{amsmath}')
-
-
-### Param
 ####################
+
+
+### Parameters
+####################
+# Ground truth R= [cos(theta), sin(theta)]
 theta = np.pi/4
+# Starting position
 X_true_0 = np.array([[1/np.sqrt(2)], [1/np.sqrt(2)]])
 
-sigma2_Z = 2.15e-3
-############################################
+# Number of time steps
 N = 20
+# Number of outer iterations (decreases sigma2_U)
 max_out_iter = 3
+# Number of inner iterations (iterative algorithm) (iterative algorithm) (iterative algorithm)
 max_in_iter = 100
 
+# Observation noise values
+sigma2_Z = 2.15e-3
 
+# plot=True generates plots for log-likelihood, theta, and norm{r}
 plot = True
+# DEBUG mode prints out the Gaussian messages
 DEBUG = True
 
 # Fix random seed
 np.random.seed(9)
+####################
+
 
 ## Data curation
 R_true = np.array([[np.cos(theta)], [np.sin(theta)]])
 X_true = generate_ground_truth(R_true, X_true_0, N)
 y_obs = generate_noisy_obs(X_true, C, sigma2_Z, N)
 
+## EM algorithm
 print("Starting EM Algorithm")
 R_est_em, LL_series, _, theta_series_em, r_norm_series_em = expectation_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_true, X_true, DEBUG)
 sqe_em = squared_error(R_est_em, R_true)
 
+## AM algorithm
 print("Starting AM Algorithm")
 R_est_am, X_est_am , _, theta_series_am, r_norm_series_am = alternate_maximization(sigma2_Z, N, y_obs, max_out_iter, max_in_iter, R_true, X_true, DEBUG)
 sqe_am = squared_error(R_est_am, R_true)
 
+## Final squared error
 print(f"sigma2_Z = {sigma2_Z:.2e}, EM L2 error= {sqe_em:.2e}, AM L2 error= {sqe_am:.2e}")
 
 def plot_epoch_borders(max_out_iter, max_in_iter):
+    # Plots a vertical black bar at the end one outer loop iteration (when V_U changes)
     for out_iter in range (1, max_out_iter,1):
-        plt.axvline(x=out_iter*max_in_iter, color='black', linestyle='--', linewidth=1 )  # Vertical line at index 50
+        plt.axvline(x=out_iter*max_in_iter, color='black', linestyle='--', linewidth=1 )
     return
 
 if plot:
